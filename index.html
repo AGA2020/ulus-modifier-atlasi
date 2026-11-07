@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#252724">
-  <meta name="description" content="ULUS içerik yazarları için modifier atlası. Kategorileri keşfedin, etkileri karşılaştırın ve doğru yazımı kopyalayın.">
+  <meta name="description" content="ULUS içerik yazarları için modifier atlası. Kategorileri keşfedin, oyundaki gerçek denge örneklerini görün ve tekli veya çoklu JSON paketlerini kopyalayın.">
   <title>Modifier Atlası · ULUS</title>
   <script src="theme.js"></script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -26,7 +26,7 @@
       <div class="sidebar-heading"><span class="small-cap">KATEGORİLER</span></div>
       <div id="categoryNav" class="category-nav"></div>
       <p class="nav-count-hint">Sayılar seçili filtrelere göredir.</p>
-      <div class="sidebar-note"><span class="note-symbol">i</span><p>Önce etkiyi seç.<br>Sonra değerini belirle.<br><strong>Hikâyeyi sen yaz.</strong></p></div>
+      <div class="sidebar-note"><span class="note-symbol">i</span><p>Önce etkiyi seç.<br>Gerçek denge örneklerine bak.<br><strong>İstersen pakete ekleyip toplu JSON kopyala.</strong></p></div>
       <a class="sidebar-guide" href="#guide">Yüzde mi, puan mı?<span>↗</span></a>
     </aside>
 
@@ -35,8 +35,8 @@
         <div class="hero-copy">
           <div class="eyebrow"><span class="red-line"></span>ULUS / YAZAR REHBERİ</div>
           <h1 id="pageTitle">Modifier <em>atlası.</em></h1>
-          <p>Doğru etkiyi bul. Kullanım kaynağını kontrol et. Yazımını kopyala.</p>
-          <div class="hero-meta"><span><i class="live-dot"></i> 7 Kasım 2026 içerik kesiti</span><span>1933 + 1939 kapsamı</span></div>
+          <p>Doğru etkiyi bul. Oyundaki gerçek denge örneklerini karşılaştır. Tekli veya çoklu JSON paketini kopyala.</p>
+          <div class="hero-meta"><span><i class="live-dot"></i> 7 Kasım 2026 içerik kesiti</span><span>1933 + 1939 kapsamı</span><span>43 doktrin anahtarı ülke kaynağına bağlı</span></div>
         </div>
         <div class="atlas-graphic" aria-label="116 ülke anahtarının 106'sı genel kullanıma bağlı, 8'i bağlantısız, 2'si sisteme özel">
           <div class="overview-heading"><strong>106 <span>ülke anahtarı bağlı</span></strong><span>116 ülke anahtarı</span></div>
@@ -49,9 +49,9 @@
       <section class="catalogue" id="catalogue" aria-labelledby="catalogueTitle">
         <div class="catalogue-top"><div><h2 id="catalogueTitle">Etki kütüphanesi</h2></div><button class="text-button" id="resetFilters">Filtreleri temizle <span>↺</span></button></div>
         <div class="search-row"><div class="search-box"><span id="searchIcon" aria-hidden="true"></span><input id="searchInput" type="search" placeholder="Etki, anahtar veya açıklama ara…" autocomplete="off" aria-label="Modifier ara"><kbd>/</kbd></div><label class="scenario-select"><span>Kullanım kapsamı</span><select id="scenarioSelect" aria-label="Senaryo kapsamı"><option value="all">Tüm kullanımlar</option><option value="1939">1939 başlangıç tesiri</option></select></label><label class="scenario-select scale-select"><span>Değer ölçeği</span><select id="unitSelect" aria-label="Değer ölçeği"><option value="all">Tüm ölçekler</option><option value="ratio">Oran · %</option><option value="points">Puan · +</option><option value="count">Adet · #</option></select></label></div>
-        <div class="filter-row"><div class="status-tabs" role="group" aria-label="Çalışma durumu"><button data-status="active" class="selected" aria-pressed="true">Kullanılabilir <b>106</b></button><button data-status="all" aria-pressed="false">Tümü <b>116</b></button><button data-status="inactive" aria-pressed="false">Bağlantısız <b>8</b></button><button data-status="system" aria-pressed="false">Sisteme özel <b>2</b></button></div></div>
+        <div class="filter-row"><div class="status-tabs" role="group" aria-label="Çalışma durumu"><button data-status="active" class="selected" aria-pressed="true">Kullanılabilir <b>108</b></button><button data-status="all" aria-pressed="false">Tümü <b>118</b></button><button data-status="inactive" aria-pressed="false">Bağlantısız <b>8</b></button><button data-status="system" aria-pressed="false">Sisteme özel <b>2</b></button></div></div>
         <div id="scopeNote" class="scope-note" hidden></div>
-        <div class="results-heading"><div><div class="results-title"><h3 id="currentCategory">Bütün ülke etkileri</h3><span class="result-count" id="resultCount" role="status" aria-live="polite"></span></div><p id="categoryDescription"></p></div><a class="scale-help" href="#guide">100 bp ne demek? <span>↗</span></a></div>
+        <div class="results-heading"><div><div class="results-title"><h3 id="currentCategory">Bütün etkiler</h3><span class="result-count" id="resultCount" role="status" aria-live="polite"></span></div><p id="categoryDescription"></p></div><a class="scale-help" href="#guide">100 bp ne demek? <span>↗</span></a></div>
         <div id="armyFilters" class="army-filters" role="group" aria-label="Kuvvet alanı" hidden></div>
         <div id="cards" class="cards"></div>
         <div class="empty-state" id="emptyState" hidden><span>⌕</span><h3>Bu filtrelerde etki bulunamadı.</h3><p id="emptyHint">Başka bir kelime deneyebilir veya filtreleri temizleyebilirsin.</p><button id="emptyReset">Filtreleri temizle</button><button id="emptyAllStatuses" class="secondary-action" hidden>Tüm durumları göster</button></div>
@@ -67,16 +67,32 @@
       </section>
 
       <section class="notes-grid" aria-label="Kullanım sınırları">
-        <article><span class="small-cap">KAYNAK & DEĞER</span><h3>Ülke kaynağında en fazla 16 etki.</h3><p>Genel ülke kaynağında aynı anahtarı tekrarlama. Sabit değer −10000…10000 bp aralığında ve sıfırdan farklı olmalı. Doktrinlerin ayrı anahtar listesi ve alan kuralları vardır; karttaki kaynak etiketine bak.</p></article>
+        <article><span class="small-cap">KAYNAK & DEĞER</span><h3>Ülke kaynağında en fazla 16 etki.</h3><p>Genel ülke kaynağında aynı anahtarı tekrarlama. Sabit değer −10000…10000 bp aralığında ve sıfırdan farklı olmalı. 43 doktrin anahtarının tamamı hem doktrinlerde hem ülke kaynaklarında çalışır.</p></article>
         <article><span class="small-cap">SENARYO KAPSAMI</span><h3>1939 için etiketi kontrol et.</h3><p>1939 başlangıç tesirleri yalnız işaretli 55 anahtarın yazılı bp değerini okur. Bu yolda koşul, süre, yükseltme ve değişkene bağlı dinamik hesap uygulanmaz.</p></article>
         <article><span class="small-cap">TOPLAM & SINIR</span><h3>Bonuslar önce toplanır.</h3><p>Aynı anahtarın kaynakları toplanır. Normal oran çarpanı %10–%300 aralığında tutulur; −%100 her oranı sıfırlamaz. Dış borçlanma, puan ve adet anahtarları kendi sınırlarını kullanır.</p></article>
         <article><span class="small-cap">DİNAMİK İÇERİK</span><h3>Değer hikâyeyle değişebilir.</h3><p>Genel ülke kaynağında <code>"dynamic": true</code> kullan. Formül: bp + değişken × factor. Kaynağı önce ülkeye ver; ardından <code>add_modifier</code> veya <code>set_modifier</code> ile değiştir. Bu format doktrin tanımına uygulanmaz.</p></article>
       </section>
-      <footer><div class="footer-brand">ULUS<span>MODIFIER ATLASI</span></div><p>7 Kasım 2026 · 116 ülke + 43 doktrin + 2 Bölge tanımı · 117 farklı anahtar<br>Aynı adlı farklı kaynaklar ayrı gösterilir. Kod bağlantıları, night_attack ve 29 doktrin uzmanlığı oyun içi testlerle doğrulandı.</p><a href="#pageTitle">Başa dön ↑</a></footer>
+      <footer><div class="footer-brand">ULUS<span>MODIFIER ATLASI</span></div><p>7 Kasım 2026 · 116 ülke + 43 doktrin + 2 Bölge tanımı · 117 farklı anahtar<br>43 doktrin anahtarının tamamı ülke tesiri, lider, danışman ve teknolojilerde de çalışır. Kod bağlantıları EditMode testleriyle doğrulandı.</p><a href="#pageTitle">Başa dön ↑</a></footer>
     </main>
   </div>
 
+  <div class="bundle-bar" id="bundleBar" hidden role="region" aria-label="Modifier paket oluşturucu">
+    <div class="bundle-bar-info">
+      <span class="bundle-badge" id="bundleCount">0 / 16</span>
+      <div>
+        <strong id="bundleTitle">Tesir paketi</strong>
+        <small id="bundleSummary">Seçili etkileri tek JSON bloğu olarak kopyala</small>
+      </div>
+    </div>
+    <div class="bundle-bar-actions">
+      <button type="button" class="bundle-secondary" id="openBundle">Paketi düzenle</button>
+      <button type="button" class="bundle-primary" id="copyBundleQuick">JSON'u kopyala</button>
+      <button type="button" class="bundle-clear" id="clearBundleQuick" aria-label="Paketi temizle" title="Paketi temizle">✕</button>
+    </div>
+  </div>
+
   <dialog id="detailDialog" aria-labelledby="detailTitle"><div class="dialog-head"><span id="detailEyebrow" class="small-cap"></span><button id="closeDialog" class="icon-button" aria-label="Ayrıntıyı kapat">✕</button></div><div id="detailContent"></div></dialog>
+  <dialog id="bundleDialog" aria-labelledby="bundleDialogTitle"><div class="dialog-head"><span class="small-cap">ÇOKLU MODIFIER SEPETİ · EN FAZLA 16 ETKİ</span><button id="closeBundleDialog" class="icon-button" aria-label="Paketi kapat">✕</button></div><div id="bundleContent"></div></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <noscript><p class="noscript">Etkileri aramak ve kartları görüntülemek için tarayıcında JavaScript'i etkinleştir.</p></noscript>
 </body>
