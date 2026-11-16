@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#252724">
   <meta name="description" content="ULUS içerik yazarları için 1933 bölge listesi: ülkelerin bölgeleri, kimlikleri, nüfus, bina kapasitesi, başlangıç binaları, kaynaklar, liman ve demiryolu seviyeleri.">
   <title>Bölge Listesi · ULUS</title>
-  <script>window.ATLAS_VERSION='202611162155';(()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}})();</script>
-  <script src="theme.js?v=202611162155"></script>
+  <script>window.ATLAS_VERSION='202611162200';(()=>{const check=()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}};check();addEventListener('pageshow',e=>{if(e.persisted)check();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});document.addEventListener('DOMContentLoaded',()=>{for(const n of document.querySelectorAll('[data-atlas-version]'))n.textContent='Sürüm '+window.ATLAS_VERSION;});})();</script>
+  <script src="theme.js?v=202611162200"></script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=202611162155">
-  <link rel="stylesheet" href="theme.css?v=202611162155">
-  <link rel="stylesheet" href="atlas.css?v=202611162155">
-  <link rel="stylesheet" href="regions.css?v=202611162155">
-  <script src="regions-data.js?v=202611162155" defer></script>
-  <script src="regions-map.js?v=202611162155" defer></script>
-  <script src="regions.js?v=202611162155" defer></script>
+  <link rel="stylesheet" href="style.css?v=202611162200">
+  <link rel="stylesheet" href="theme.css?v=202611162200">
+  <link rel="stylesheet" href="atlas.css?v=202611162200">
+  <link rel="stylesheet" href="regions.css?v=202611162200">
+  <script src="regions-data.js?v=202611162200" defer></script>
+  <script src="regions-map.js?v=202611162200" defer></script>
+  <script src="regions.js?v=202611162200" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#regions">Listeye geç</a>
@@ -111,7 +111,7 @@
       <div class="empty-state" id="emptyState" hidden><span>⌕</span><h3>Bu filtrelerde bölge bulunamadı.</h3><p>Başka bir ad dene veya ülke seçimini kaldır.</p><button id="emptyReset" type="button">Filtreleri temizle</button></div>
     </section>
 
-    <footer><div class="footer-brand">ULUS<span>BÖLGE LİSTESİ</span></div><p id="footerNote"></p><a href="#pageTitle">Başa dön ↑</a></footer>
+    <footer><div class="footer-brand">ULUS<span>BÖLGE LİSTESİ</span></div><p id="footerNote"></p><span class="footer-version" data-atlas-version></span><a href="#pageTitle">Başa dön ↑</a></footer>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

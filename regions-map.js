@@ -358,7 +358,7 @@ window.RegionMap = (() => {
     select(index, fit) {
       if (index !== selectedIndex) selectedProvince = 0;
       selectedIndex = index; draw();
-      if (index) loadProvinces().catch(() => {});
+      if (index) loadProvinces().catch(error => options.onProvinceError?.(error));
       const s = index ? data.states[index - 1] : null;
       if (fit && s && s.box) {
         const r = canvas.getBoundingClientRect(), [x0, y0, x1, y1] = s.box;

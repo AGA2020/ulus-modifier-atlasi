@@ -125,3 +125,5 @@ dialog{padding:26px;width:min(640px,calc(100% - 32px));max-height:calc(100dvh - 
 @media(prefers-reduced-motion:reduce){.modifier-card{transition:none}}
 @media(max-width:740px){.hero-meta,.results-heading p{display:none}.results-title{gap:9px}.results-title .result-count{font-size:10px;padding:4px 8px;display:inline-block;text-align:left}.hero{padding-bottom:18px}.hero-copy>p{font-size:12px}.results-heading{margin-top:17px}}
 @media print{.topbar,.sidebar,.army-filters,.scale-help,.key-copy-button,.key-bundle-button,.card-details,.nav-count-hint,.value-presets,.bundle-bar{display:none!important}.layout{display:block}main{padding:0}.hero{padding:0}.hero h1{font-size:30px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.modifier-card{padding:12px;break-inside:avoid}.card-description{-webkit-line-clamp:unset;font-size:11px}.card-open{flex:initial}.card-key-row{padding:6px;margin-top:10px}.card-key{font-size:10px}.card-category{font-size:9px}.card-bottom{margin-top:8px}.card-top{margin-bottom:8px}.modifier-card h3{font-size:18px}.results-heading h3{font-size:22px}}
+
+.footer-version{font-size:10px;color:var(--muted);white-space:nowrap}

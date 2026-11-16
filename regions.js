@@ -253,6 +253,7 @@
     map?.selectProvince(pid);
     const box = $('provinceBox');
     $('provinceHint').hidden = Boolean(pid);
+    if (!$('provinceHint').classList.contains('province-error')) $('provinceHint').textContent = "Province'ler için bölgenin içine tıkla.";
     box.hidden = !pid;
     if (!pid) return;
     const row = map?.province(pid);
@@ -272,6 +273,14 @@
       extra.m ? ['Not', 'Haritada gösterilemeyecek kadar küçük'] : null,
     ].filter(Boolean);
     $('provinceStats').replaceChildren(...stats.map(([k, v]) => { const d = el('div'); d.append(el('dt', '', k), el('dd', '', v)); return d; }));
+  }
+
+  // A failed province download stays visible instead of silently showing no provinces.
+  function provinceError(error) {
+    const hint = $('provinceHint');
+    hint.hidden = false;
+    hint.classList.add('province-error');
+    hint.textContent = `Province verisi yüklenemedi (${error && error.message ? error.message : 'ağ hatası'}). Sayfayı Ctrl+F5 ile yenileyip bölgeyi yeniden seç.`;
   }
 
   function pickProvince(pid) {
@@ -368,8 +377,8 @@
     });
     render();
     map?.init(data, {
-      src: 'regions-map.png?v=202611162155', provinceImage: 'regions-provinces.png?v=202611162155', provinceSrc: 'regions-provinces.json?v=202611162155',
-      countryName, onSelect: pickFromMap, onProvince: pickProvince,
+      src: 'regions-map.png?v=202611162200', provinceImage: 'regions-provinces.png?v=202611162200', provinceSrc: 'regions-provinces.json?v=202611162200',
+      countryName, onSelect: pickFromMap, onProvince: pickProvince, onProvinceError: provinceError,
     });
     map?.setCountry(view.country, true);
     if (view.selected) {
