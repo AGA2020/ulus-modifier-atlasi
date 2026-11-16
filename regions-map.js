@@ -61,6 +61,22 @@ window.RegionMap = (() => {
   }
 
   // A small canvas covering one state's box, filled where the raster holds that state.
+  // Selection style (17 Nov): the area keeps its country colour; a dark outer line, a light inner line and a sparse
+  // diagonal hatch mark it. A solid fill looked like a separate country (British Cameroons read as a new state).
+  function paintMark(image, w, h, inside, outer, inner, hatchAlpha) {
+    const out = (x, y) => x < 0 || y < 0 || x >= w || y >= h || !inside(x, y);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (!inside(x, y)) continue;
+        const o = (y * w + x) * 4;
+        let c = null, a = 0;
+        if (out(x + 1, y) || out(x - 1, y) || out(x, y + 1) || out(x, y - 1)) { c = outer; a = 255; }
+        else if (out(x + 2, y) || out(x - 2, y) || out(x, y + 2) || out(x, y - 2) || out(x + 1, y + 1) || out(x - 1, y - 1) || out(x + 1, y - 1) || out(x - 1, y + 1)) { c = inner; a = 255; }
+        else if (hatchAlpha && (x + y) % 7 === 0) { c = inner; a = hatchAlpha; }
+        if (c) { image.data[o] = c[0]; image.data[o + 1] = c[1]; image.data[o + 2] = c[2]; image.data[o + 3] = a; }
+      }
+  }
+
   function highlight(index, kind) {
     const key = index + kind;
     if (highlightCache.has(key)) return highlightCache.get(key);
@@ -71,20 +87,23 @@ window.RegionMap = (() => {
     layer.width = w; layer.height = h;
     const layerCtx = layer.getContext('2d');
     const image = layerCtx.createImageData(w, h);
-    const color = hex(css(kind === 'select' ? '--map-select' : '--map-hover') || '#fff');
     const edge = hex(css('--map-province') || '#000');
+    const outer = hex(css('--map-mark-outer') || '#000'), inner = hex(css(kind === 'select' ? '--map-mark' : '--map-hover') || '#fff');
     const provinces = kind === 'select' && provIds;
-    for (let y = 0; y < h; y++)
-      for (let x = 0; x < w; x++) {
-        const p = (y0 + y) * width + x0 + x;
-        if (ids[p] !== index) continue;
-        const o = (y * w + x) * 4;
-        const border = provinces && ((x + 1 < w && ids[p + 1] === index && provIds[p + 1] !== provIds[p]) ||
-          (y + 1 < h && ids[p + width] === index && provIds[p + width] !== provIds[p]));
-        const c = border ? edge : color;
-        image.data[o] = c[0]; image.data[o + 1] = c[1]; image.data[o + 2] = c[2];
-        image.data[o + 3] = border ? 230 : kind === 'select' ? (provinces ? 120 : 200) : 130;
-      }
+    // Province borders first; the outline drawn after them stays on top at the region's edge.
+    if (provinces)
+      for (let y = 0; y < h; y++)
+        for (let x = 0; x < w; x++) {
+          const p = (y0 + y) * width + x0 + x;
+          if (ids[p] !== index) continue;
+          if ((x + 1 < w && ids[p + 1] === index && provIds[p + 1] !== provIds[p]) || (y + 1 < h && ids[p + width] === index && provIds[p + width] !== provIds[p])) {
+            const o = (y * w + x) * 4;
+            image.data[o] = edge[0]; image.data[o + 1] = edge[1]; image.data[o + 2] = edge[2]; image.data[o + 3] = 230;
+          }
+        }
+    const inside = (x, y) => ids[(y0 + y) * width + x0 + x] === index;
+    if (kind === 'select') paintMark(image, w, h, inside, outer, inner, provinces ? 0 : 150);
+    else paintMark(image, w, h, inside, inner, inner, 0);
     layerCtx.putImageData(image, 0, 0);
     const entry = { layer, x0, y0 };
     if (highlightCache.size > 64) highlightCache.clear();
@@ -106,13 +125,10 @@ window.RegionMap = (() => {
     const w = x1 - x0, h = y1 - y0, layer = document.createElement('canvas');
     layer.width = w; layer.height = h;
     const layerCtx = layer.getContext('2d'), image = layerCtx.createImageData(w, h);
-    const color = hex(css(kind === 'select' ? '--map-province-select' : '--map-hover') || '#fff');
-    for (let y = 0; y < h; y++)
-      for (let x = 0; x < w; x++)
-        if (provIds[(y0 + y) * width + x0 + x] === pid) {
-          const o = (y * w + x) * 4;
-          image.data[o] = color[0]; image.data[o + 1] = color[1]; image.data[o + 2] = color[2]; image.data[o + 3] = kind === 'select' ? 235 : 150;
-        }
+    const outer = hex(css('--map-mark-outer') || '#000'), inner = hex(css(kind === 'select' ? '--map-province-select' : '--map-hover') || '#fff');
+    const inside = (x, y) => provIds[(y0 + y) * width + x0 + x] === pid;
+    if (kind === 'select') paintMark(image, w, h, inside, outer, inner, 200);
+    else paintMark(image, w, h, inside, inner, inner, 110);
     layerCtx.putImageData(image, 0, 0);
     const entry = { layer, x0, y0 };
     highlightCache.set(key, entry);

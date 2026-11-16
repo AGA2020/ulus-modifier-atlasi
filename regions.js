@@ -377,7 +377,7 @@
     });
     render();
     map?.init(data, {
-      src: 'regions-map.png?v=202611162206', provinceImage: 'regions-provinces.png?v=202611162206', provinceSrc: 'regions-provinces.json?v=202611162206',
+      src: 'regions-map.png?v=202611162212', provinceImage: 'regions-provinces.png?v=202611162212', provinceSrc: 'regions-provinces.json?v=202611162212',
       countryName, onSelect: pickFromMap, onProvince: pickProvince, onProvinceError: provinceError,
     });
     map?.setCountry(view.country, true);

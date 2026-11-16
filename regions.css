@@ -1,6 +1,6 @@
 /* Region list page; reuses the atlas tokens (style.css/theme.css), so both themes follow automatically. */
-:root{--map-sea:#c9d3d0;--map-border:#2a2f2a;--map-coast:#4d5a57;--map-hover:#ffffff;--map-select:#8c3033;--map-province:#2b1214;--map-province-select:#f4e3a1;--map-fade:.74}
-:root[data-theme="dark"]{--map-sea:#18211f;--map-border:#0c0f0c;--map-coast:#58665f;--map-hover:#fff5dc;--map-select:#f0b1a3;--map-province:#3a1714;--map-province-select:#f6e7a8;--map-fade:.8}
+:root{--map-sea:#c9d3d0;--map-border:#2a2f2a;--map-coast:#4d5a57;--map-hover:#ffffff;--map-select:#8c3033;--map-mark:#fffdf3;--map-mark-outer:#1c1412;--map-province:#2b1214;--map-province-select:#f4d35e;--map-fade:.74}
+:root[data-theme="dark"]{--map-sea:#18211f;--map-border:#0c0f0c;--map-coast:#58665f;--map-hover:#fff5dc;--map-select:#f0b1a3;--map-mark:#fff5dc;--map-mark-outer:#050505;--map-province:#3a1714;--map-province-select:#f6d860;--map-fade:.8}
 .topbar nav a.nav-current{color:#e6b8a7;border-bottom:1px solid currentColor;padding-bottom:3px}
 .region-main{max-width:1500px;margin:0 auto;padding:44px 48px 0}
 .region-hero{padding-bottom:30px;border-bottom:1px solid var(--line)}
