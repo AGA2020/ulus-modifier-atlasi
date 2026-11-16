@@ -95,14 +95,16 @@
   function scaleHint(entry) {
     if(entry.scope==='state') return 'amount: 20 = +%20';
     if(entry.id==='night_attack') return '100 bp = cezada %1 azaltma';
-    if(entry.unit==='Adet') return 'bp: 1 = +1 yuva';
+    if(entry.unit==='Adet') return `bp: 1 = +1 ${entry.countWord||'adet'}`;
+    if(entry.direct) return 'bp: 1 = +1 puan';
     return entry.unit.startsWith('Puan')?'100 bp = +1 puan':'100 bp = +%1';
   }
 
   function defaultValue(entry) {
     if(entry.id==='night_attack') return 1000;
     if(entry.scope==='state') return entry.lowerIsBetter?-20:20;
-    if(entry.unit==='Adet') return 1;
+    if(entry.unit==='Adet') return entry.presets?entry.presets[entry.lowerIsBetter?1:2]:1;
+    if(entry.direct) return entry.lowerIsBetter?-5:5;
     if(entry.unit.startsWith('Puan/')) return entry.lowerIsBetter?-10:10;
     if(entry.id==='max_planning') return 1000;
     if(entry.unit==='Puan') return entry.lowerIsBetter?-100:100;
@@ -110,8 +112,8 @@
   }
 
   function valueLabel(entry,value) {
-    const sign=value>0?'+':'−', amount=formatNumber(Math.abs(value)/(entry.scope==='state'||entry.unit==='Adet'?1:100));
-    return entry.unit==='Adet'?`${sign}${amount} yuva`:entry.unit.startsWith('Puan')?`${sign}${amount} puan`:`${sign}%${amount}`;
+    const sign=value>0?'+':'−', amount=formatNumber(Math.abs(value)/(entry.scope==='state'||entry.unit==='Adet'||entry.direct?1:100));
+    return entry.unit==='Adet'?`${sign}${amount} ${entry.countWord||'adet'}`:entry.unit.startsWith('Puan')?`${sign}${amount} puan`:`${sign}%${amount}`;
   }
 
   function updateUrl() {
@@ -277,7 +279,7 @@
     $('#emptyAllStatuses').hidden=filtered.length>0||otherStatuses===0||state.status==='all';
     $('#emptyHint').textContent=otherStatuses>0&&filtered.length===0?`Bu filtrelerde başka çalışma durumlarında ${otherStatuses} anahtar var.`:'Aramanı kısaltabilir, başka bir ölçek seçebilir veya filtreleri temizleyebilirsin.';
     let note='';
-    if(state.scenario==='1939') note='1939 başlangıç tesirlerinde 55 anahtar desteklenir; bu liste seçili filtrelere göre daralır. Yalnız yazılı bp okunur; koşul, süre, yükseltme ve değişken hesabı uygulanmaz.';
+    if(state.scenario==='1939') note='1939 başlangıç tesirlerinde 58 anahtar desteklenir; bu liste seçili filtrelere göre daralır. Yalnız yazılı bp okunur; koşul, süre, yükseltme ve değişken hesabı uygulanmaz.';
     else if(regional) note='Bölge değiştiricileri add_state_modifier komutuyla uygulanır. Burada amount doğrudan yüzdedir: 20 = +%20. Ülke modifier listesindeki bp ölçeğiyle karıştırma.';
     else if(state.category==='doctrine') note='Bu 43 anahtar hem doktrin/kurum okullarında hem ülke modifier kaynaklarında (tesir, lider, danışman, teknoloji ve 1939 başlangıç tesiri) çalışır. İki kaynaktan gelen katkılar aynı mekanik kuralına göre toplanır.';
     else if(state.status==='inactive') note='Bu anahtarlar katalogda vardır; mevcut durumda yazılan bonusu oyunda uygulamaz. Çalışan bonus olarak kullanma.';
@@ -307,7 +309,7 @@
       $('#exampleCode').textContent=''; currentSnippet=''; return;
     }
     $('#exampleResult').textContent=valueLabel(entry,value);
-    const period=entry.unit==='Puan/gün'?'Her oyun günü':entry.unit==='Puan/hafta'?'Her oyun haftası başında':entry.unit==='Puan/ay'?'Her ayın ilk gününde':entry.scope==='state'?'Bu Bölgedeki sonraki inşaatlar':entry.unit==='Adet'?'Kurallardaki yuva sınırları geçerli':entry.unit==='Puan'?'İlgili tavana / hedefe eklenir':'Mevcut değerin oran çarpanı';
+    const period=entry.periodNote||(entry.unit==='Puan/gün'?'Her oyun günü':entry.unit==='Puan/hafta'?'Her oyun haftası başında':entry.unit==='Puan/ay'?'Her ayın ilk gününde':entry.scope==='state'?'Bu Bölgedeki sonraki inşaatlar':entry.unit==='Adet'?'Kurallardaki yuva sınırları geçerli':entry.unit==='Puan'?'İlgili tavana / hedefe eklenir':'Mevcut değerin oran çarpanı');
     $('#exampleHint').textContent=entry.id==='night_attack'?'Gece cezasından kaldırılan pay':period;
     const example = entry.scope==='state'
       ? {add_state_modifier:{state:'erzurum',key:entry.id,amount:value}}
@@ -348,7 +350,7 @@
       });
     }
     if(entry.status==='active') {
-      const presets=entry.scope==='state'?[-20,10,20]:entry.unit==='Adet'?[-1,1,2]:entry.step===100?[-100,100,500,1000]:entry.unit.startsWith('Puan')?[-10,10,100]:[-1000,-500,500,1000];
+      const presets=entry.scope==='state'?[-20,10,20]:entry.presets?entry.presets:entry.unit==='Adet'?[-1,1,2]:entry.direct?[-5,5,10]:entry.step===100?[-100,100,500,1000]:entry.unit.startsWith('Puan')?[-10,10,100]:[-1000,-500,500,1000];
       $('.value-editor').insertAdjacentHTML('afterend',`<div class="value-presets" id="valuePresets" role="group" aria-label="Örnek değerler"><span>Hızlı örnek</span>${presets.map(value=>`<button type="button" data-value="${value}">${valueLabel(entry,value)}</button>`).join('')}</div>`);
       $('#valuePresets').addEventListener('click',event=>{
         const button=event.target.closest('[data-value]');
