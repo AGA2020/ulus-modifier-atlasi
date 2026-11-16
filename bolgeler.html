@@ -6,14 +6,15 @@
   <meta name="theme-color" content="#252724">
   <meta name="description" content="ULUS içerik yazarları için 1933 bölge listesi: ülkelerin bölgeleri, kimlikleri, nüfus, bina kapasitesi, başlangıç binaları, kaynaklar, liman ve demiryolu seviyeleri.">
   <title>Bölge Listesi · ULUS</title>
-  <script src="theme.js?v=20261116a"></script>
+  <script src="theme.js?v=20261116b"></script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20261116a">
-  <link rel="stylesheet" href="theme.css?v=20261116a">
-  <link rel="stylesheet" href="atlas.css?v=20261116a">
-  <link rel="stylesheet" href="regions.css?v=20261116a">
-  <script src="regions-data.js?v=20261116a" defer></script>
-  <script src="regions.js?v=20261116a" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261116b">
+  <link rel="stylesheet" href="theme.css?v=20261116b">
+  <link rel="stylesheet" href="atlas.css?v=20261116b">
+  <link rel="stylesheet" href="regions.css?v=20261116b">
+  <script src="regions-data.js?v=20261116b" defer></script>
+  <script src="regions-map.js?v=20261116b" defer></script>
+  <script src="regions.js?v=20261116b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#regions">Listeye geç</a>
@@ -26,7 +27,7 @@
     <section class="region-hero" aria-labelledby="pageTitle">
       <div class="eyebrow"><span class="red-line"></span>ULUS / YAZAR REHBERİ</div>
       <h1 id="pageTitle">Bölge <em>listesi.</em></h1>
-      <p>Ülkeyi seç, bölgelerini ve başlangıç değerlerini gör. Bölge kimliğini tek tıkla, bütün listeyi JSON ya da tablo olarak kopyala.</p>
+      <p>Bölgeyi haritada bul ya da ülkeyi seç; bölgelerin kimliklerini ve başlangıç değerlerini gör. Kimliği tek tıkla, bütün listeyi JSON ya da tablo olarak kopyala.</p>
       <div class="hero-meta"><span><i class="live-dot"></i> <span id="updated"></span> veri kesiti</span><span id="scenarioLabel"></span><span id="totals"></span></div>
     </section>
 
@@ -46,6 +47,26 @@
         </div>
       </div>
 
+      <div class="map-panel" aria-label="Bölge haritası">
+        <canvas id="mapCanvas" role="img" aria-label="Bölge haritası: bölgenin üstüne gel veya dokun, seçmek için tıkla"></canvas>
+        <div class="map-loading" id="mapLoading">Harita yükleniyor…</div>
+        <div class="map-tip" id="mapTip" hidden></div>
+        <div class="map-controls" role="group" aria-label="Harita yakınlaştırma">
+          <button type="button" id="zoomIn" aria-label="Yakınlaştır" title="Yakınlaştır">+</button>
+          <button type="button" id="zoomOut" aria-label="Uzaklaştır" title="Uzaklaştır">−</button>
+          <button type="button" id="zoomFit" aria-label="Seçili ülkeye dön" title="Seçili ülkeye / Avrupa'ya dön">⌖</button>
+          <button type="button" id="zoomWorld" aria-label="Bütün dünya" title="Bütün dünya">◯</button>
+        </div>
+        <div class="map-card" id="mapCard" hidden>
+          <div class="map-card-head"><strong id="cardName"></strong><button type="button" class="icon-close" id="cardClose" aria-label="Seçimi kaldır">✕</button></div>
+          <button type="button" class="copy-id" id="cardId" title="Bölge kimliğini kopyala"></button>
+          <dl id="cardStats"></dl>
+          <button type="button" class="action-secondary" id="cardRow">Tabloda göster</button>
+        </div>
+        <p class="map-hint">Sürükle: kaydır · Tekerlek veya iki parmak: yakınlaştır · Tıkla: bölgeyi seç</p>
+      </div>
+      <p class="map-credit">Harita kaynakları: province sınırları <a href="https://www.geoboundaries.org" rel="noopener">geoBoundaries</a> (Runfola ve ark., 2020, PLoS ONE 15(4): e0231866; ülkeye göre ODbL, CC BY, CC BY-SA ve diğer açık lisanslar), kıyılar <a href="https://www.naturalearthdata.com" rel="noopener">Natural Earth</a> (kamu malı). Görüntü bu kaynaklardan türetilmiştir; kaynakların lisans koşulları geçerlidir.</p>
+
       <details class="region-note">
         <summary>Sütunlar ne anlatıyor?</summary>
         <ul>
@@ -54,6 +75,7 @@
           <li><strong>Kaynaklar</strong> bölgedeki provincelerin günlük çıkarım sınırlarının toplamıdır. Toplam rezerv değildir ve madenin 1933'te çalıştığını göstermez.</li>
           <li><strong>Çekirdek / talep</strong> 1933 başlangıcında o bölgeyi ana toprak sayan ve talep eden ülkelerdir.</li>
           <li>Nüfus ve kapasite dengelemesi sürüyor; kesit tarihinden sonra değerler değişmiş olabilir.</li>
+          <li>Harita oyunun province haritasının üçte bir ölçeğidir; çok küçük bölgeler tek nokta olarak görünür, listede hepsi vardır.</li>
         </ul>
       </details>
 

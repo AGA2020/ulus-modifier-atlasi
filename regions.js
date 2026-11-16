@@ -13,12 +13,15 @@
   const countryName = tag => data.countryNames[tag] || tag;
   const buildingName = id => data.buildingNames[id] || id;
   const resourceName = id => data.resourceNames[id] || id;
+  data.states.forEach((state, i) => { state.index = i + 1; });
+  const stateById = new Map(data.states.map(s => [s.id, s]));
+  const map = window.RegionMap;
   for (const state of data.states) {
     state.search = fold(`${state.name} ${state.id} ${state.owner} ${countryName(state.owner)}`);
     state.port = state.ports.length ? state.ports[0] : 0;
   }
 
-  const view = { country: '', query: '', sort: 'name', dir: 1, limit: PAGE };
+  const view = { country: '', query: '', sort: 'name', dir: 1, limit: PAGE, selected: '' };
 
   function readUrl() {
     const params = new URLSearchParams(location.search);
@@ -28,6 +31,9 @@
     const sort = params.get('sirala');
     if (['name', 'owner', 'population', 'capacity', 'port', 'rail'].includes(sort)) view.sort = sort;
     view.dir = params.get('yon') === 'azalan' ? -1 : 1;
+    const selected = stateById.get(params.get('bolge') || '');
+    view.selected = selected ? selected.id : '';
+    if (selected && !view.country) view.country = selected.owner;
   }
 
   function writeUrl() {
@@ -36,6 +42,7 @@
     if (view.query) params.set('q', view.query);
     if (view.sort !== 'name') params.set('sirala', view.sort);
     if (view.dir < 0) params.set('yon', 'azalan');
+    if (view.selected) params.set('bolge', view.selected);
     const query = params.toString();
     history.replaceState(null, '', query ? `?${query}` : location.pathname);
   }
@@ -75,6 +82,9 @@
 
   function row(state) {
     const tr = document.createElement('tr');
+    tr.dataset.index = state.index;
+    tr.id = `row-${state.id}`;
+    if (state.id === view.selected) tr.className = 'selected';
     const name = el('td', 'col-name');
     const title = el('div', 'state-name', state.name);
     if (state.capital) title.append(el('span', 'capital-badge', 'Başkent'));
@@ -206,11 +216,48 @@
     return [head.join('\t'), ...lines].join('\n');
   }
 
-  function setCountry(tag) {
+  function setCountry(tag, fit = true) {
+    if (view.selected && stateById.get(view.selected).owner !== tag) selectState(null);
     view.country = tag;
     view.limit = PAGE;
     $('countrySelect').value = tag;
+    map?.setCountry(tag, fit);
     render();
+  }
+
+  function selectState(state, fit = false) {
+    view.selected = state ? state.id : '';
+    map?.select(state ? state.index : 0, fit);
+    const card = $('mapCard');
+    card.hidden = !state;
+    if (!state) return;
+    $('cardName').textContent = state.name;
+    $('cardId').textContent = state.id;
+    $('cardId').dataset.copy = state.id;
+    const stats = [
+      ['Sahip', `${countryName(state.owner)} · ${state.owner}`],
+      ['Nüfus', numberFormat.format(state.population)],
+      ['Kapasite', `${state.used} / ${state.capacity}`],
+      ['Liman', state.ports.length ? String(state.port) : '—'],
+      ['Demiryolu', state.rail ? String(state.rail) : '—'],
+    ];
+    $('cardStats').replaceChildren(...stats.map(([k, v]) => { const d = el('div'); d.append(el('dt', '', k), el('dd', '', v)); return d; }));
+  }
+
+  function pickFromMap(state) {
+    if (state.owner !== view.country) setCountry(state.owner, false);
+    selectState(state);
+    render();
+  }
+
+  function showRow(state) {
+    if (view.query && !filtered().includes(state)) { view.query = ''; $('searchInput').value = ''; }
+    const rows = filtered();
+    const at = rows.indexOf(state);
+    if (at >= view.limit) view.limit = at + 1;
+    render();
+    const row = document.getElementById(`row-${state.id}`);
+    if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1400); }
   }
 
   function init() {
@@ -232,7 +279,7 @@
 
     select.addEventListener('change', () => setCountry(select.value));
     $('searchInput').addEventListener('input', event => { view.query = event.target.value; view.limit = PAGE; render(); });
-    const reset = () => { view.query = ''; $('searchInput').value = ''; view.sort = 'name'; view.dir = 1; setCountry(''); };
+    const reset = () => { view.query = ''; $('searchInput').value = ''; view.sort = 'name'; view.dir = 1; selectState(null); setCountry(''); };
     $('resetFilters').addEventListener('click', reset);
     $('emptyReset').addEventListener('click', reset);
     $('showMore').addEventListener('click', () => { view.limit += PAGE; render(); });
@@ -246,10 +293,22 @@
     });
     $('regionRows').addEventListener('click', event => {
       const target = event.target.closest('[data-copy],[data-country]');
-      if (!target) return;
-      if (target.dataset.copy) copy(target.dataset.copy, `“${target.dataset.copy}”`);
-      else setCountry(target.dataset.country);
+      if (target) {
+        if (target.dataset.copy) copy(target.dataset.copy, `“${target.dataset.copy}”`);
+        else setCountry(target.dataset.country);
+        return;
+      }
+      const row = event.target.closest('tr[data-index]');
+      if (row) { selectState(data.states[row.dataset.index - 1], true); render(); }
     });
+    $('regionRows').addEventListener('mouseover', event => {
+      const row = event.target.closest('tr[data-index]');
+      map?.setHover(row ? Number(row.dataset.index) : 0);
+    });
+    $('regionRows').addEventListener('mouseleave', () => map?.setHover(0));
+    $('cardId').addEventListener('click', () => copy(view.selected, `“${view.selected}”`));
+    $('cardClose').addEventListener('click', () => { selectState(null); render(); });
+    $('cardRow').addEventListener('click', () => view.selected && showRow(stateById.get(view.selected)));
     $('countryTag').addEventListener('click', () => copy(view.country, `“${view.country}”`));
     $('copyIds').addEventListener('click', () => copy(JSON.stringify(exportRows().map(s => s.id)), 'Bölge kimlikleri'));
     $('copyJson').addEventListener('click', () => copy(exportJson(exportRows()), 'JSON'));
@@ -262,6 +321,9 @@
       }
     });
     render();
+    map?.init(data, { src: 'regions-map.png?v=20261116b', countryName, onSelect: pickFromMap });
+    map?.setCountry(view.country, true);
+    if (view.selected) selectState(stateById.get(view.selected));
   }
 
   document.addEventListener('DOMContentLoaded', init, { once: true });
