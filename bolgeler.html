@@ -11,10 +11,10 @@
   <link rel="stylesheet" href="style.css?v=20261116b">
   <link rel="stylesheet" href="theme.css?v=20261116b">
   <link rel="stylesheet" href="atlas.css?v=20261116b">
-  <link rel="stylesheet" href="regions.css?v=20261116b">
-  <script src="regions-data.js?v=20261116b" defer></script>
-  <script src="regions-map.js?v=20261116b" defer></script>
-  <script src="regions.js?v=20261116b" defer></script>
+  <link rel="stylesheet" href="regions.css?v=20261116c">
+  <script src="regions-data.js?v=20261116c" defer></script>
+  <script src="regions-map.js?v=20261116c" defer></script>
+  <script src="regions.js?v=20261116c" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#regions">Listeye geç</a>
@@ -61,9 +61,18 @@
           <div class="map-card-head"><strong id="cardName"></strong><button type="button" class="icon-close" id="cardClose" aria-label="Seçimi kaldır">✕</button></div>
           <button type="button" class="copy-id" id="cardId" title="Bölge kimliğini kopyala"></button>
           <dl id="cardStats"></dl>
-          <button type="button" class="action-secondary" id="cardRow">Tabloda göster</button>
+          <div class="card-actions">
+            <button type="button" class="action-secondary" id="cardRow">Tabloda göster</button>
+            <button type="button" class="action-secondary" id="cardProvinces" title="Bölgenin bütün province kimliklerini JSON dizisi olarak kopyala">Province kimlikleri</button>
+          </div>
+          <div class="province-box" id="provinceBox" hidden>
+            <div class="province-head"><span class="small-cap">PROVINCE</span><button type="button" class="copy-id" id="provinceId" title="Province kimliğini kopyala"></button></div>
+            <strong id="provinceName"></strong>
+            <dl id="provinceStats"></dl>
+          </div>
+          <p class="province-hint" id="provinceHint">Province'ler için bölgenin içine tıkla.</p>
         </div>
-        <p class="map-hint">Sürükle: kaydır · Tekerlek veya iki parmak: yakınlaştır · Tıkla: bölgeyi seç</p>
+        <p class="map-hint">Sürükle: kaydır · Tekerlek veya iki parmak: yakınlaştır · Tıkla: seç · Çift tıkla: bölgeye yakınlaş</p>
       </div>
       <p class="map-credit">Harita kaynakları: province sınırları <a href="https://www.geoboundaries.org" rel="noopener">geoBoundaries</a> (Runfola ve ark., 2020, PLoS ONE 15(4): e0231866; ülkeye göre ODbL, CC BY, CC BY-SA ve diğer açık lisanslar), kıyılar <a href="https://www.naturalearthdata.com" rel="noopener">Natural Earth</a> (kamu malı). Görüntü bu kaynaklardan türetilmiştir; kaynakların lisans koşulları geçerlidir.</p>
 
@@ -75,7 +84,8 @@
           <li><strong>Kaynaklar</strong> bölgedeki provincelerin günlük çıkarım sınırlarının toplamıdır. Toplam rezerv değildir ve madenin 1933'te çalıştığını göstermez.</li>
           <li><strong>Çekirdek / talep</strong> 1933 başlangıcında o bölgeyi ana toprak sayan ve talep eden ülkelerdir.</li>
           <li>Nüfus ve kapasite dengelemesi sürüyor; kesit tarihinden sonra değerler değişmiş olabilir.</li>
-          <li>Harita oyunun province haritasının üçte bir ölçeğidir; çok küçük bölgeler tek nokta olarak görünür, listede hepsi vardır.</li>
+          <li>Harita oyunun province haritasının üçte bir ölçeğidir; çok küçük bölge ve province'ler tek nokta olarak görünür, listede hepsi vardır.</li>
+          <li><strong>Province kimliği</strong> içerikte kullanılan kalıcı kimliktir (<code>definition.csv</code>, <code>factories.json</code>'daki <code>province</code>). Bölge seçilince province sınırları görünür; province'e tıklayınca arazisi, yerleşimi, kaynakları, binaları, limanı ve demiryolu seviyesi gelir.</li>
         </ul>
       </details>
 

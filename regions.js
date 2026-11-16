@@ -21,7 +21,7 @@
     state.port = state.ports.length ? state.ports[0] : 0;
   }
 
-  const view = { country: '', query: '', sort: 'name', dir: 1, limit: PAGE, selected: '' };
+  const view = { country: '', query: '', sort: 'name', dir: 1, limit: PAGE, selected: '', province: 0 };
 
   function readUrl() {
     const params = new URLSearchParams(location.search);
@@ -34,6 +34,7 @@
     const selected = stateById.get(params.get('bolge') || '');
     view.selected = selected ? selected.id : '';
     if (selected && !view.country) view.country = selected.owner;
+    view.province = selected ? Number(params.get('province')) || 0 : 0;
   }
 
   function writeUrl() {
@@ -43,6 +44,7 @@
     if (view.sort !== 'name') params.set('sirala', view.sort);
     if (view.dir < 0) params.set('yon', 'azalan');
     if (view.selected) params.set('bolge', view.selected);
+    if (view.selected && view.province) params.set('province', view.province);
     const query = params.toString();
     history.replaceState(null, '', query ? `?${query}` : location.pathname);
   }
@@ -226,6 +228,7 @@
   }
 
   function selectState(state, fit = false) {
+    if (!state || state.id !== view.selected) selectProvince(0);
     view.selected = state ? state.id : '';
     map?.select(state ? state.index : 0, fit);
     const card = $('mapCard');
@@ -242,6 +245,42 @@
       ['Demiryolu', state.rail ? String(state.rail) : '—'],
     ];
     $('cardStats').replaceChildren(...stats.map(([k, v]) => { const d = el('div'); d.append(el('dt', '', k), el('dd', '', v)); return d; }));
+  }
+
+  // Province card: everything the generator knows about one province, by its stable id.
+  function selectProvince(pid) {
+    view.province = pid;
+    map?.selectProvince(pid);
+    const box = $('provinceBox');
+    $('provinceHint').hidden = Boolean(pid);
+    box.hidden = !pid;
+    if (!pid) return;
+    const row = map?.province(pid);
+    if (!row) { box.hidden = true; return; }
+    const extra = row[3] || {};
+    $('provinceId').textContent = String(pid);
+    $('provinceName').textContent = extra.s ? extra.s.join(', ') : `Province ${pid}`;
+    const join = (obj, names, format = v => v) => Object.entries(obj || {}).map(([k, v]) => `${names[k] || k} ${format(v)}`).join(', ');
+    const stats = [
+      ['Arazi', map.terrain(row[1]) + (row[2] ? ' · kıyı' : '')],
+      extra.c ? ['Başkent', 'Evet'] : null,
+      extra.b ? ['Binalar', join(extra.b, data.buildingNames)] : null,
+      extra.r ? ['Kaynaklar /gün', join(extra.r, data.resourceNames, v => numberFormat.format(v))] : null,
+      extra.p ? ['Liman', String(extra.p)] : null,
+      ['Demiryolu', extra.y ? String(extra.y) : '—'],
+      extra.h ? ['İkmal merkezi', 'Var'] : null,
+      extra.m ? ['Not', 'Haritada gösterilemeyecek kadar küçük'] : null,
+    ].filter(Boolean);
+    $('provinceStats').replaceChildren(...stats.map(([k, v]) => { const d = el('div'); d.append(el('dt', '', k), el('dd', '', v)); return d; }));
+  }
+
+  function pickProvince(pid) {
+    const row = map?.province(pid);
+    if (!row) return;
+    const state = data.states[row[0] - 1];
+    if (state.id !== view.selected) pickFromMap(state);
+    selectProvince(pid);
+    writeUrl();
   }
 
   function pickFromMap(state) {
@@ -309,6 +348,13 @@
     $('cardId').addEventListener('click', () => copy(view.selected, `“${view.selected}”`));
     $('cardClose').addEventListener('click', () => { selectState(null); render(); });
     $('cardRow').addEventListener('click', () => view.selected && showRow(stateById.get(view.selected)));
+    $('provinceId').addEventListener('click', () => copy(String(view.province), `Province ${view.province}`));
+    $('cardProvinces').addEventListener('click', async () => {
+      const state = stateById.get(view.selected);
+      if (!state || !map) return;
+      try { await map.loadProvinces(); } catch { toast('Province verisi yüklenemedi'); return; }
+      copy(JSON.stringify(map.stateProvinces(state.index)), `${state.name}: province kimlikleri`);
+    });
     $('countryTag').addEventListener('click', () => copy(view.country, `“${view.country}”`));
     $('copyIds').addEventListener('click', () => copy(JSON.stringify(exportRows().map(s => s.id)), 'Bölge kimlikleri'));
     $('copyJson').addEventListener('click', () => copy(exportJson(exportRows()), 'JSON'));
@@ -321,9 +367,16 @@
       }
     });
     render();
-    map?.init(data, { src: 'regions-map.png?v=20261116b', countryName, onSelect: pickFromMap });
+    map?.init(data, {
+      src: 'regions-map.png?v=20261116c', provinceImage: 'regions-provinces.png?v=20261116c', provinceSrc: 'regions-provinces.json?v=20261116c',
+      countryName, onSelect: pickFromMap, onProvince: pickProvince,
+    });
     map?.setCountry(view.country, true);
-    if (view.selected) selectState(stateById.get(view.selected));
+    if (view.selected) {
+      const wantedProvince = view.province;
+      selectState(stateById.get(view.selected));
+      if (wantedProvince) map?.loadProvinces().then(() => { selectProvince(wantedProvince); writeUrl(); }).catch(() => {});
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init, { once: true });

@@ -1,12 +1,14 @@
 // Region map for bolgeler.html: one state-id raster (regions-map.png, R = low byte, G = high byte of state index + 1)
-// is coloured in the browser by owner, so theme and country changes need no extra image. Presentation only.
+// is coloured in the browser by owner, so theme and country changes need no extra image. Opening a region loads the
+// province-id raster (regions-provinces.png, stable definition.csv ids) and its details once. Presentation only.
 window.RegionMap = (() => {
   'use strict';
   let canvas, ctx, tip, data, options;
   let ids, width = 0, height = 0, base, baseCtx;
   let ownerOf, colorOf;
   const view = { scale: 1, x: 0, y: 0 };
-  let focusCountry = '', hoverIndex = 0, selectedIndex = 0;
+  let focusCountry = '', hoverIndex = 0, selectedIndex = 0, hoverProvince = 0, selectedProvince = 0;
+  let provIds = null, provinceInfo = null, provincePromise = null;
   const highlightCache = new Map();
   let frame = 0;
 
@@ -70,17 +72,71 @@ window.RegionMap = (() => {
     const layerCtx = layer.getContext('2d');
     const image = layerCtx.createImageData(w, h);
     const color = hex(css(kind === 'select' ? '--map-select' : '--map-hover') || '#fff');
+    const edge = hex(css('--map-province') || '#000');
+    const provinces = kind === 'select' && provIds;
     for (let y = 0; y < h; y++)
-      for (let x = 0; x < w; x++)
-        if (ids[(y0 + y) * width + x0 + x] === index) {
-          const o = (y * w + x) * 4;
-          image.data[o] = color[0]; image.data[o + 1] = color[1]; image.data[o + 2] = color[2]; image.data[o + 3] = kind === 'select' ? 200 : 130;
-        }
+      for (let x = 0; x < w; x++) {
+        const p = (y0 + y) * width + x0 + x;
+        if (ids[p] !== index) continue;
+        const o = (y * w + x) * 4;
+        const border = provinces && ((x + 1 < w && ids[p + 1] === index && provIds[p + 1] !== provIds[p]) ||
+          (y + 1 < h && ids[p + width] === index && provIds[p + width] !== provIds[p]));
+        const c = border ? edge : color;
+        image.data[o] = c[0]; image.data[o + 1] = c[1]; image.data[o + 2] = c[2];
+        image.data[o + 3] = border ? 230 : kind === 'select' ? (provinces ? 120 : 200) : 130;
+      }
     layerCtx.putImageData(image, 0, 0);
     const entry = { layer, x0, y0 };
     if (highlightCache.size > 64) highlightCache.clear();
     highlightCache.set(key, entry);
     return entry;
+  }
+
+  function provinceLayer(pid, kind) {
+    const key = 'p' + pid + kind;
+    if (highlightCache.has(key)) return highlightCache.get(key);
+    const state = selectedIndex ? data.states[selectedIndex - 1] : null;
+    if (!state || !state.box || !provIds) return null;
+    const [sx0, sy0, sx1, sy1] = state.box;
+    let x0 = sx1, y0 = sy1, x1 = sx0, y1 = sy0;
+    for (let y = sy0; y < sy1; y++)
+      for (let x = sx0; x < sx1; x++)
+        if (provIds[y * width + x] === pid) { if (x < x0) x0 = x; if (x >= x1) x1 = x + 1; if (y < y0) y0 = y; if (y >= y1) y1 = y + 1; }
+    if (x1 <= x0) return null;
+    const w = x1 - x0, h = y1 - y0, layer = document.createElement('canvas');
+    layer.width = w; layer.height = h;
+    const layerCtx = layer.getContext('2d'), image = layerCtx.createImageData(w, h);
+    const color = hex(css(kind === 'select' ? '--map-province-select' : '--map-hover') || '#fff');
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++)
+        if (provIds[(y0 + y) * width + x0 + x] === pid) {
+          const o = (y * w + x) * 4;
+          image.data[o] = color[0]; image.data[o + 1] = color[1]; image.data[o + 2] = color[2]; image.data[o + 3] = kind === 'select' ? 235 : 150;
+        }
+    layerCtx.putImageData(image, 0, 0);
+    const entry = { layer, x0, y0 };
+    highlightCache.set(key, entry);
+    return entry;
+  }
+
+  function loadProvinces() {
+    if (!provincePromise)
+      provincePromise = Promise.all([
+        fetch(options.provinceSrc).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+        new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = options.provinceImage; }),
+      ]).then(([info, img]) => {
+        const reader = document.createElement('canvas');
+        reader.width = img.naturalWidth; reader.height = img.naturalHeight;
+        const readerCtx = reader.getContext('2d', { willReadFrequently: true });
+        readerCtx.drawImage(img, 0, 0);
+        const raw = readerCtx.getImageData(0, 0, reader.width, reader.height).data;
+        const grid = new Uint16Array(reader.width * reader.height);
+        for (let p = 0, o = 0; p < grid.length; p++, o += 4) grid[p] = raw[o] | (raw[o + 1] << 8);
+        provIds = grid; provinceInfo = info;
+        highlightCache.clear(); draw();
+        return info;
+      }).catch(error => { provincePromise = null; throw error; });
+    return provincePromise;
   }
 
   function draw() {
@@ -98,11 +154,11 @@ window.RegionMap = (() => {
       ctx.imageSmoothingEnabled = view.scale < 1;
       ctx.drawImage(base, -view.x * view.scale, -view.y * view.scale, width * view.scale, height * view.scale);
       ctx.imageSmoothingEnabled = false;
-      for (const [index, kind] of [[selectedIndex, 'select'], [hoverIndex !== selectedIndex ? hoverIndex : 0, 'hover']]) {
-        if (!index) continue;
-        const h = highlight(index, kind);
-        if (h) ctx.drawImage(h.layer, (h.x0 - view.x) * view.scale, (h.y0 - view.y) * view.scale, h.layer.width * view.scale, h.layer.height * view.scale);
-      }
+      const put = h => { if (h) ctx.drawImage(h.layer, (h.x0 - view.x) * view.scale, (h.y0 - view.y) * view.scale, h.layer.width * view.scale, h.layer.height * view.scale); };
+      for (const [index, kind] of [[selectedIndex, 'select'], [hoverIndex !== selectedIndex ? hoverIndex : 0, 'hover']])
+        if (index) put(highlight(index, kind));
+      if (selectedProvince) put(provinceLayer(selectedProvince, 'select'));
+      if (hoverProvince && hoverProvince !== selectedProvince) put(provinceLayer(hoverProvince, 'hover'));
     });
   }
 
@@ -118,11 +174,11 @@ window.RegionMap = (() => {
     view.x = mx - sx / view.scale; view.y = my - sy / view.scale;
     clampView(); draw();
   }
-  function fitBox(box) {
+  function fitBox(box, pad = 1.25) {
     if (!ids || !box || !canvas.clientWidth) return;
     const [x0, y0, x1, y1] = box;
-    const pad = 1.25, bw = Math.max(40, x1 - x0), bh = Math.max(30, y1 - y0);
-    view.scale = Math.max(minScale(), Math.min(6, canvas.clientWidth / (bw * pad), canvas.clientHeight / (bh * pad)));
+    const bw = Math.max(40, x1 - x0), bh = Math.max(30, y1 - y0);
+    view.scale = Math.max(minScale(), Math.min(8, canvas.clientWidth / (bw * pad), canvas.clientHeight / (bh * pad)));
     view.x = (x0 + x1) / 2 - canvas.clientWidth / view.scale / 2;
     view.y = (y0 + y1) / 2 - canvas.clientHeight / view.scale / 2;
     clampView(); draw();
@@ -149,21 +205,34 @@ window.RegionMap = (() => {
     else fitBox([Math.round(width * 0.43), Math.round(height * 0.12), Math.round(width * 0.62), Math.round(height * 0.36)]);
   }
 
-  function stateAt(clientX, clientY) {
-    if (!ids) return 0;
+  function pixelAt(clientX, clientY) {
+    if (!ids) return -1;
     const r = canvas.getBoundingClientRect();
     const x = Math.floor(view.x + (clientX - r.left) / view.scale), y = Math.floor(view.y + (clientY - r.top) / view.scale);
-    return x >= 0 && y >= 0 && x < width && y < height ? ids[y * width + x] : 0;
+    return x >= 0 && y >= 0 && x < width && y < height ? y * width + x : -1;
+  }
+  function stateAt(clientX, clientY) { const p = pixelAt(clientX, clientY); return p < 0 ? 0 : ids[p]; }
+  function provinceAt(clientX, clientY) {
+    const p = pixelAt(clientX, clientY);
+    return p < 0 || !provIds || !selectedIndex || ids[p] !== selectedIndex ? 0 : provIds[p];
   }
 
-  function showTip(index, clientX, clientY) {
+  function showTip(index, clientX, clientY, pid = 0) {
     if (!index) { tip.hidden = true; return; }
     const s = data.states[index - 1];
     tip.replaceChildren();
-    const name = document.createElement('strong'); name.textContent = s.name;
-    const id = document.createElement('code'); id.textContent = s.id;
-    const owner = document.createElement('span'); owner.textContent = `${options.countryName(s.owner)} · ${s.owner}`;
-    tip.append(name, id, owner);
+    const line = (tag, text) => { const node = document.createElement(tag); node.textContent = text; tip.append(node); };
+    if (pid && provinceInfo) {
+      const row = provinceInfo.provinces[pid] || [];
+      const extra = row[3] || {};
+      line('strong', extra.s ? extra.s.join(', ') : `Province ${pid}`);
+      line('code', `province ${pid}`);
+      line('span', [provinceInfo.terrains[row[1]], row[2] ? 'Kıyı' : '', s.name].filter(Boolean).join(' · '));
+    } else {
+      line('strong', s.name);
+      line('code', s.id);
+      line('span', `${options.countryName(s.owner)} · ${s.owner}`);
+    }
     tip.hidden = false;
     const r = canvas.parentElement.getBoundingClientRect();
     const x = clientX - r.left + 14, y = clientY - r.top + 14;
@@ -171,9 +240,9 @@ window.RegionMap = (() => {
     tip.style.top = `${Math.min(y, r.height - tip.offsetHeight - 8)}px`;
   }
 
-  function setHover(index) {
-    if (index === hoverIndex) return;
-    hoverIndex = index;
+  function setHover(index, pid = 0) {
+    if (index === hoverIndex && pid === hoverProvince) return;
+    hoverIndex = index; hoverProvince = pid;
     canvas.style.cursor = index ? 'pointer' : 'grab';
     draw();
   }
@@ -190,7 +259,10 @@ window.RegionMap = (() => {
     canvas.addEventListener('pointermove', event => {
       const last = pointers.get(event.pointerId);
       if (!last) {
-        if (event.pointerType === 'mouse') { const index = stateAt(event.clientX, event.clientY); setHover(index); showTip(index, event.clientX, event.clientY); }
+        if (event.pointerType === 'mouse') {
+          const index = stateAt(event.clientX, event.clientY), pid = provinceAt(event.clientX, event.clientY);
+          setHover(index, pid); showTip(index, event.clientX, event.clientY, pid);
+        }
         return;
       }
       const dx = event.clientX - last.x, dy = event.clientY - last.y;
@@ -212,14 +284,23 @@ window.RegionMap = (() => {
       pointers.delete(event.pointerId);
       if (pointers.size < 2) pinch = 0;
       if (wasTap && event.type === 'pointerup') {
-        const index = stateAt(event.clientX, event.clientY);
-        if (index) options.onSelect(data.states[index - 1]);
-        if (event.pointerType !== 'mouse') showTip(index, event.clientX, event.clientY);
+        const index = stateAt(event.clientX, event.clientY), pid = provinceAt(event.clientX, event.clientY);
+        if (pid) options.onProvince(pid);
+        else if (index) options.onSelect(data.states[index - 1]);
+        if (event.pointerType !== 'mouse') showTip(index, event.clientX, event.clientY, pid);
       }
     };
     canvas.addEventListener('pointerup', end);
     canvas.addEventListener('pointercancel', end);
     canvas.addEventListener('pointerleave', event => { if (event.pointerType === 'mouse') { setHover(0); tip.hidden = true; } });
+    // Double click opens the region: select it and zoom to its provinces.
+    canvas.addEventListener('dblclick', event => {
+      const index = stateAt(event.clientX, event.clientY);
+      if (!index) return;
+      const state = data.states[index - 1];
+      if (index !== selectedIndex) options.onSelect(state);
+      fitBox(state.box, 1.15);
+    });
     canvas.addEventListener('wheel', event => {
       event.preventDefault();
       const r = canvas.getBoundingClientRect();
@@ -258,6 +339,8 @@ window.RegionMap = (() => {
       document.getElementById('mapLoading').hidden = true;
       paintBase();
       fitDefault();
+      // A link that names a region (?bolge=) opens on that region, not on the whole country.
+      if (selectedIndex && data.states[selectedIndex - 1].box) fitBox(data.states[selectedIndex - 1].box, 1.8);
     };
     image.onerror = () => { document.getElementById('mapLoading').textContent = 'Harita yüklenemedi; liste yine kullanılabilir.'; };
     image.src = opts.src;
@@ -265,10 +348,17 @@ window.RegionMap = (() => {
 
   return {
     init,
+    loadProvinces,
+    province(pid) { return provinceInfo && provinceInfo.provinces[pid]; },
+    stateProvinces(index) { return provinceInfo ? provinceInfo.states[index - 1] : null; },
+    terrain(i) { return provinceInfo ? provinceInfo.terrains[i] : ''; },
+    selectProvince(pid) { selectedProvince = pid; draw(); },
     setCountry(tag, fit) { focusCountry = tag; paintBase(); if (fit) fitDefault(); },
     setHover(index) { setHover(index); },
     select(index, fit) {
+      if (index !== selectedIndex) selectedProvince = 0;
       selectedIndex = index; draw();
+      if (index) loadProvinces().catch(() => {});
       const s = index ? data.states[index - 1] : null;
       if (fit && s && s.box) {
         const r = canvas.getBoundingClientRect(), [x0, y0, x1, y1] = s.box;
