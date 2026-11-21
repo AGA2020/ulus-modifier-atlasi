@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#252724">
   <meta name="description" content="ULUS içerik yazarları için modifier atlası. Kategorileri keşfedin, oyundaki gerçek denge örneklerini görün ve tekli veya çoklu JSON paketlerini kopyalayın.">
   <title>Modifier Atlası · ULUS</title>
-  <script>window.ATLAS_VERSION='202611220153';(()=>{const check=()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}};check();addEventListener('pageshow',e=>{if(e.persisted)check();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});document.addEventListener('DOMContentLoaded',()=>{for(const n of document.querySelectorAll('[data-atlas-version]'))n.textContent='Sürüm '+window.ATLAS_VERSION;});})();</script>
-  <script src="theme.js?v=202611220153"></script>
+  <script>window.ATLAS_VERSION='202611220200';(()=>{const check=()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}};check();addEventListener('pageshow',e=>{if(e.persisted)check();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});document.addEventListener('DOMContentLoaded',()=>{for(const n of document.querySelectorAll('[data-atlas-version]'))n.textContent='Sürüm '+window.ATLAS_VERSION;});})();</script>
+  <script src="theme.js?v=202611220200"></script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=202611220153">
-  <link rel="stylesheet" href="theme.css?v=202611220153">
-  <link rel="stylesheet" href="atlas.css?v=202611220153">
-  <script src="data.js?v=202611220153" defer></script>
-  <script src="app.js?v=202611220153" defer></script>
+  <link rel="stylesheet" href="style.css?v=202611220200">
+  <link rel="stylesheet" href="theme.css?v=202611220200">
+  <link rel="stylesheet" href="atlas.css?v=202611220200">
+  <script src="data.js?v=202611220200" defer></script>
+  <script src="app.js?v=202611220200" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#catalogue">Kataloğa geç</a>
@@ -52,7 +52,10 @@
         <div class="search-row"><div class="search-box"><span id="searchIcon" aria-hidden="true"></span><input id="searchInput" type="search" placeholder="Etki, anahtar veya açıklama ara…" autocomplete="off" aria-label="Modifier ara"><kbd>/</kbd></div><label class="scenario-select"><span>Kullanım kapsamı</span><select id="scenarioSelect" aria-label="Senaryo kapsamı"><option value="all">Tüm kullanımlar</option><option value="1939">1939 başlangıç tesiri</option></select></label><label class="scenario-select scale-select"><span>Değer ölçeği</span><select id="unitSelect" aria-label="Değer ölçeği"><option value="all">Tüm ölçekler</option><option value="ratio">Oran · %</option><option value="points">Puan · +</option><option value="count">Adet · #</option></select></label></div>
         <div class="filter-row">
           <div class="status-tabs" role="group" aria-label="Çalışma durumu"><button data-status="active" class="selected" aria-pressed="true">Kullanılabilir <b>141</b></button><button data-status="all" aria-pressed="false">Tümü <b>151</b></button><button data-status="inactive" aria-pressed="false">Bağlantısız <b>8</b></button><button data-status="system" aria-pressed="false">Sisteme özel <b>2</b></button></div>
-          <label class="doctrine-filter"><input type="checkbox" id="doctrineFilter"> Doktrinde kullanılabilir</label>
+          <div class="catalogue-toggles" role="group" aria-label="Ek filtreler">
+            <label><input type="checkbox" id="doctrineFilter"> Doktrinde kullanılabilir</label>
+            <label><input type="checkbox" id="changesFilter"> Son güncellemede değişenler</label>
+          </div>
         </div>
         <div id="scopeNote" class="scope-note" hidden></div>
         <div class="results-heading"><div><div class="results-title"><h3 id="currentCategory">Bütün etkiler</h3><span class="result-count" id="resultCount" role="status" aria-live="polite"></span></div><p id="categoryDescription"></p></div><a class="scale-help" href="#guide">100 bp ne demek? <span>↗</span></a></div>
