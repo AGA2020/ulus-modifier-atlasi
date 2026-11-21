@@ -22,7 +22,7 @@ h1{font-size:52px;letter-spacing:-2px;margin:14px 0 12px;line-height:1.1}
 .overview-heading>strong{font:32px Georgia;white-space:nowrap}.overview-heading>strong span{font:12px "Segoe UI",sans-serif;letter-spacing:0;color:var(--muted)}
 .overview-heading>span{font-size:11px;color:var(--muted)}
 .overview-bar{display:flex;height:8px;gap:3px;border-radius:4px;overflow:hidden;margin:13px 0}
-.overview-bar i{flex:123;background:var(--olive)}.overview-bar b{flex:8;background:#b99c65}.overview-bar span{flex:2;background:#929f94}
+.overview-bar i{flex:139;background:var(--olive)}.overview-bar b{flex:8;background:#b99c65}.overview-bar span{flex:2;background:#929f94}
 .chart-legend{display:flex;gap:12px;justify-content:space-between}.chart-legend>span{font-size:10px;gap:3px}.dot{width:6px;height:6px}
 .graphic-bottom{margin:16px -18px -18px;padding:10px 16px;font-size:10px;gap:12px}
 .catalogue{padding-top:24px;scroll-margin-top:90px}.catalogue-top{margin-bottom:16px;align-items:center}.catalogue-top h2{font-size:24px;margin:0}

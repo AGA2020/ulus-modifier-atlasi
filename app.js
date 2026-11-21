@@ -2,6 +2,7 @@
   'use strict';
   const sourceEntries = window.ATLAS_DATA.entries;
   const entries = sourceEntries.filter(entry=>entry.scope!=='doctrine');
+  const bookmarkKeyCount = entries.filter(entry=>entry.bookmark1939).length;
   const doctrineByKey = new Map(sourceEntries.filter(entry=>entry.scope==='doctrine').map(entry=>[entry.id,entry]));
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -288,7 +289,7 @@
     $('#emptyAllStatuses').hidden=filtered.length>0||otherStatuses===0||state.status==='all';
     $('#emptyHint').textContent=otherStatuses>0&&filtered.length===0?`Bu filtrelerde başka çalışma durumlarında ${otherStatuses} anahtar var.`:'Aramanı kısaltabilir, başka bir ölçek seçebilir veya filtreleri temizleyebilirsin.';
     let note='';
-    if(state.scenario==='1939') note='1939 başlangıç tesirlerinde 58 anahtar desteklenir; bu liste seçili filtrelere göre daralır. Yalnız yazılı bp okunur; koşul, süre, yükseltme ve değişken hesabı uygulanmaz.';
+    if(state.scenario==='1939') note=`1939 başlangıç tesirlerinde ${bookmarkKeyCount} anahtar desteklenir. Bu kaynak yalnız yazılı bp değerini okur.`;
     else if(regional) note='Bölge değiştiricileri add_state_modifier komutuyla uygulanır. Burada amount doğrudan yüzdedir: 20 = +%20. Ülke modifier listesindeki bp ölçeğiyle karıştırma.';
     else if(state.status==='inactive') note='Bu anahtarlar katalogda vardır; mevcut durumda yazılan bonusu oyunda uygulamaz. Çalışan bonus olarak kullanma.';
     else if(state.status==='system') note='Bu iki anahtar kıtlık sisteminin gösterim özetidir. Başka bir tesire yazmak nüfus veya istikrar etkisi uygulamaz.';
