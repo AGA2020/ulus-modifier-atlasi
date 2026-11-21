@@ -1,6 +1,8 @@
 (() => {
   'use strict';
-  const entries = window.ATLAS_DATA.entries;
+  const sourceEntries = window.ATLAS_DATA.entries;
+  const entries = sourceEntries.filter(entry=>entry.scope!=='doctrine');
+  const doctrineByKey = new Map(sourceEntries.filter(entry=>entry.scope==='doctrine').map(entry=>[entry.id,entry]));
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const fold = value => String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
@@ -16,7 +18,6 @@
     regional:'<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/>',
     search:'<circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/>',
     copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
-    doctrine:'<path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3ZM12 6v16M6 8h3m-3 4h3m6-4h3m-3 4h3"/>',
   };
   const svg = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.all}</svg>`;
   const categories = [
@@ -26,20 +27,18 @@
     {id:'manpower',name:'İnsan gücü',color:'#768159'},
     {id:'diplomacy',name:'Diplomasi',color:'#557b88'},
     {id:'army',name:'Kuvvetler',color:'#687359'},
-    {id:'doctrine',name:'Doktrin & uzmanlık',color:'#9c7b4f'},
     {id:'research',name:'Araştırma',color:'#7d6f91'},
     {id:'war',name:'Barış & kapitülasyon',color:'#a1875d'},
     {id:'regional',name:'Bölge değiştiricileri',color:'#8b7259'},
   ];
   const statusNames = {active:'Kullanılabilir',inactive:'Bağlantısız',system:'Sisteme özel'};
   const categoryDescriptions = {
-    all:'Bütün benzersiz ülke ve Bölge değiştiricileri tek listede. Doktrinlerde de çalışan 43 anahtar kartta "Doktrin" etiketi taşır; detay penceresinde ülke, doktrin ve kurum okulu JSON formatları arasında geçiş yapılabilir.',
+    all:'Ülke ve Bölge değiştiricileri.',
     politics:'Karar bedelleri, istikrar, otorite, ideoloji desteği ve iç yönetim.',
     economy:'Vergi, üretim, borçlanma ve inşaat hızlarını değiştiren etkiler.',
     manpower:'Askere alınabilir nüfus, seferberlik hızı ve silah altı yükü.',
     diplomacy:'Büyükelçilerin verimi ve diplomatik ilişki katkısı.',
     army:'Muharebe, planlama, deniz ve hava gücü; ikmal, teçhizat ve komuta.',
-    doctrine:'Doktrinlerde ve kurum okullarında kabul edilen 43 anahtar. 43 anahtarın tamamı ülke tesiri, lider, danışman ve teknolojilerde de çalışır.',
     research:'Genel ve kategori araştırma hızları, bedeller ve araştırma yuvaları.',
     war:'Barış ve kapitülasyon için katalogda ayrılmış anahtarlar.',
     regional:'Ülke tesiri yerine hedef Bölgeye komutla uygulanan değiştiriciler.',
@@ -49,6 +48,7 @@
   const state = {
     q:params.get('q') || '',
     category:categories.some(c=>c.id===params.get('kategori')) ? params.get('kategori') : 'all',
+    doctrineOnly:params.get('doktrin')==='1'||params.get('kategori')==='doctrine',
     status:['active','all','inactive','system'].includes(params.get('durum')) ? params.get('durum') : 'active',
     scenario:params.get('senaryo')==='1939' ? '1939' : 'all',
     group:groups.some(g=>g.id===params.get('alan')) ? params.get('alan') : 'all',
@@ -66,29 +66,34 @@
   let toastTimer;
 
   const countryByKey = new Map(entries.filter(e=>e.scope==='country').map(e=>[e.id,e]));
-  const idFor = entry => entry.scope==='state' ? `bolge-${entry.id}` : entry.scope==='doctrine' ? `doktrin-${entry.id}` : entry.id;
-  const sourceLabel = entry => entry.scope==='doctrine'?'Doktrin':entry.scope==='state'?'Bölge':'Ülke';
+  const idFor = entry => entry.scope==='state' ? `bolge-${entry.id}` : entry.id;
+  const sourceLabel = entry => entry.scope==='state'?'Bölge':'Ülke';
   const categoryFor = entry => categories.find(c=>c.id===entry.category);
   const formatNumber = value => Number(value).toLocaleString('tr-TR',{maximumFractionDigits:2});
   const groupFor = entry => groups.find(g=>g.id===entry.group);
   const unitKind = entry => entry.unit==='Adet'?'count':entry.unit.startsWith('Puan')?'points':'ratio';
-  const hasDoctrine = entry => entry.scope==='doctrine' || Boolean(entry.doctrineGroup);
-  const searchIndex = new Map(entries.map(entry=>[idFor(entry),fold(`${entry.name} ${entry.id} ${entry.description} ${entry.doctrineDescription||''} ${sourceLabel(entry)} ${hasDoctrine(entry)?'doktrin':''} ${categoryFor(entry).name} ${groupFor(entry)?.name || ''} ${entry.unit} ${unitKind(entry)==='ratio'?'yüzde oran':''}`)]));
+  const searchIndex = new Map(entries.map(entry=>{
+    const doctrine = entry.doctrineGroup ? doctrineByKey.get(entry.id) : undefined;
+    const terms = [
+      entry.name, entry.id, entry.description, sourceLabel(entry),
+      categoryFor(entry).name, groupFor(entry)?.name, entry.unit,
+      unitKind(entry)==='ratio'?'yüzde oran':'',
+      entry.doctrineGroup?'doktrin':'', doctrine?.name, entry.doctrineDescription,
+    ];
+    return [idFor(entry),fold(terms.join(' '))];
+  }));
   let words=[];
   const categoryNav=$('#categoryNav');
   categoryNav.innerHTML=categories.map(c=>`${c.id==='regional'?'<div class="nav-divider"></div>':''}<button class="nav-category" data-category="${c.id}" aria-pressed="false"><span class="nav-icon">${svg(c.id)}</span><span class="nav-label">${c.name}</span><span class="nav-count"></span></button>`).join('');
   $('#armyFilters').innerHTML=groups.map(g=>`<button data-group="${g.id}" aria-pressed="false">${g.name}<b></b></button>`).join('');
 
   function matches(entry,{category=state.category,status=state.status,group=state.group}={}) {
-    const scopeOk = category==='all' ? entry.scope!=='doctrine'
-      : category==='regional' ? entry.scope==='state'
-      : category==='doctrine' ? entry.scope==='doctrine'
-      : entry.scope==='country' && entry.category===category;
-    return scopeOk &&
+    return (category==='all'||entry.category===category) &&
+      (!state.doctrineOnly||entry.doctrineGroup) &&
       (status==='all'||entry.status===status) &&
       (state.scenario==='all'||entry.bookmark1939) &&
       (state.unit==='all'||entry.status!=='system'&&unitKind(entry)===state.unit) &&
-      (!['army','doctrine'].includes(category)||group==='all'||entry.group===group) &&
+      (group==='all'||(state.doctrineOnly?entry.doctrineGroup:entry.group)===group) &&
       words.every(word=>searchIndex.get(idFor(entry)).includes(word));
   }
 
@@ -120,10 +125,11 @@
     const query = new URLSearchParams();
     if(state.q) query.set('q',state.q);
     if(state.category!=='all') query.set('kategori',state.category);
+    if(state.doctrineOnly) query.set('doktrin','1');
     if(state.status!=='active') query.set('durum',state.status);
     if(state.scenario!=='all') query.set('senaryo',state.scenario);
     if(state.unit!=='all') query.set('olcek',state.unit);
-    if(['army','doctrine'].includes(state.category)&&state.group!=='all') query.set('alan',state.group);
+    if(state.group!=='all') query.set('alan',state.group);
     history.replaceState(null,'',location.pathname+(query.size?'?'+query:'')+location.hash);
   }
 
@@ -233,6 +239,8 @@
 
   function render() {
     const category = categories.find(c=>c.id===state.category);
+    const showGroups = state.category==='army'||state.doctrineOnly;
+    if(!showGroups||state.doctrineOnly&&state.group==='support') state.group='all';
     words=fold(state.q).split(/\s+/).filter(Boolean);
     categoryNav.querySelectorAll('[data-category]').forEach(button=>{
       const selected=button.dataset.category===state.category;
@@ -250,13 +258,14 @@
       button.setAttribute('aria-pressed',selected);
       button.querySelector('b').textContent = entries.filter(entry=>matches(entry,{status})).length;
     });
-    $('#armyFilters').hidden=!['army','doctrine'].includes(state.category);
+    $('#doctrineFilter').checked=state.doctrineOnly;
+    $('#armyFilters').hidden=!showGroups;
     $('#armyFilters').querySelectorAll('[data-group]').forEach(button=>{
       const selected=button.dataset.group===state.group;
-      button.hidden=state.category==='doctrine'&&button.dataset.group==='support';
+      button.hidden=state.doctrineOnly&&button.dataset.group==='support';
       button.setAttribute('aria-pressed',String(selected));
       button.classList.toggle('selected',selected);
-      button.querySelector('b').textContent=entries.filter(entry=>matches(entry,{category:state.category==='doctrine'?'doctrine':'army',group:button.dataset.group})).length;
+      button.querySelector('b').textContent=entries.filter(entry=>matches(entry,{group:button.dataset.group})).length;
     });
     const filtered=entries.filter(entry=>matches(entry));
     if(words.length) {
@@ -268,10 +277,10 @@
       const c=categoryFor(entry);
       const inBundle = bundle.has(entry.id);
       const canBundle = entry.status==='active' && entry.scope!=='state';
-      const showDoctrineBadge = entry.scope==='country' && entry.doctrineGroup;
-      return `<article class="modifier-card ${inBundle?'in-bundle':''}" data-scope="${entry.scope}" data-status="${entry.status}" style="--category-color:${c.color}"><div class="card-top"><span class="card-category"><span class="card-icon">${svg(c.id)}</span>${sourceLabel(entry)} · ${esc(groupFor(entry)?.name || c.name)}</span><span class="badge ${entry.status==='active'?'':'badge-'+entry.status}">${entry.status==='active'?esc(entry.unit):statusNames[entry.status]}</span></div><button class="card-open" data-entry="${idFor(entry)}" aria-label="${esc(entry.name)} (${sourceLabel(entry)}) ayrıntısını aç"><h3>${esc(entry.name)}</h3><p class="card-description">${esc(entry.description)}</p></button><div class="card-key-row"><code class="card-key">${esc(entry.id)}</code>${canBundle?`<button type="button" class="key-bundle-button ${inBundle?'added':''}" data-bundle-key="${entry.id}" title="${inBundle?'Paketten çıkar':'Çoklu JSON paketine ekle'}">${inBundle?'✓ Pakette':'+ Paket'}</button>`:''}<button class="key-copy-button" data-copy-key="${entry.id}" aria-label="${entry.id} (${sourceLabel(entry)}) anahtarını kopyala" title="Anahtarı kopyala">${svg('copy')}</button></div><div class="card-bottom"><span class="scale-hint">${entry.status==='active'?scaleHint(entry):entry.status==='inactive'?'Mekanik bağlantısı yok':'Kıtlık gösterim anahtarı'}</span><button class="card-details" data-entry="${idFor(entry)}" aria-label="${esc(entry.name)} (${sourceLabel(entry)}) değer örneğini aç">${showDoctrineBadge?'<span class="bookmark-mark doctrine-mark">Doktrin</span>':''}${entry.bookmark1939?'<span class="bookmark-mark">1939 tesiri</span>':''}<span aria-hidden="true">↗</span></button></div></article>`;
+      const showDoctrineBadge = Boolean(entry.doctrineGroup);
+      return `<article class="modifier-card ${inBundle?'in-bundle':''}" data-scope="${entry.scope}" data-status="${entry.status}" style="--category-color:${c.color}"><div class="card-top"><span class="card-category"><span class="card-icon">${svg(c.id)}</span>${sourceLabel(entry)} · ${esc(groupFor(entry)?.name || c.name)}</span><span class="badge ${entry.status==='active'?'':'badge-'+entry.status}">${entry.status==='active'?esc(entry.unit):statusNames[entry.status]}</span></div><button class="card-open" data-entry="${idFor(entry)}" aria-label="${esc(entry.name)} (${sourceLabel(entry)}) ayrıntısını aç"><h3>${esc(entry.name)}</h3><p class="card-description">${esc(entry.description)}</p></button><div class="card-key-row"><code class="card-key">${esc(entry.id)}</code>${canBundle?`<button type="button" class="key-bundle-button ${inBundle?'added':''}" data-bundle-key="${entry.id}" title="${inBundle?'Paketten çıkar':'Çoklu JSON paketine ekle'}">${inBundle?'✓ Pakette':'+ Paket'}</button>`:''}<button class="key-copy-button" data-copy-key="${entry.id}" aria-label="${entry.id} (${sourceLabel(entry)}) anahtarını kopyala" title="Anahtarı kopyala">${svg('copy')}</button></div><div class="card-bottom"><span class="scale-hint">${entry.status==='active'?scaleHint(entry):entry.status==='inactive'?'Mekanik bağlantısı yok':'Kıtlık gösterim anahtarı'}</span><button class="card-details" data-entry="${idFor(entry)}" aria-label="${esc(entry.name)} (${sourceLabel(entry)}) değer örneğini aç">${showDoctrineBadge?'<span class="bookmark-mark doctrine-mark">Doktrin uyumlu</span>':''}${entry.bookmark1939?'<span class="bookmark-mark">1939 tesiri</span>':''}<span aria-hidden="true">↗</span></button></div></article>`;
     }).join('');
-    $('#resultCount').textContent = `${filtered.length} tanım`;
+    $('#resultCount').textContent = `${filtered.length} etki`;
     $('#emptyState').hidden = filtered.length>0;
     $('#currentCategory').textContent = category.name;
     $('#categoryDescription').textContent=categoryDescriptions[category.id];
@@ -281,7 +290,6 @@
     let note='';
     if(state.scenario==='1939') note='1939 başlangıç tesirlerinde 58 anahtar desteklenir; bu liste seçili filtrelere göre daralır. Yalnız yazılı bp okunur; koşul, süre, yükseltme ve değişken hesabı uygulanmaz.';
     else if(regional) note='Bölge değiştiricileri add_state_modifier komutuyla uygulanır. Burada amount doğrudan yüzdedir: 20 = +%20. Ülke modifier listesindeki bp ölçeğiyle karıştırma.';
-    else if(state.category==='doctrine') note='Bu 43 anahtar hem doktrin/kurum okullarında hem ülke modifier kaynaklarında (tesir, lider, danışman, teknoloji ve 1939 başlangıç tesiri) çalışır. İki kaynaktan gelen katkılar aynı mekanik kuralına göre toplanır.';
     else if(state.status==='inactive') note='Bu anahtarlar katalogda vardır; mevcut durumda yazılan bonusu oyunda uygulamaz. Çalışan bonus olarak kullanma.';
     else if(state.status==='system') note='Bu iki anahtar kıtlık sisteminin gösterim özetidir. Başka bir tesire yazmak nüfus veya istikrar etkisi uygulamaz.';
     $('#scopeNote').hidden = !note;
@@ -290,7 +298,7 @@
   }
 
   function reset() {
-    Object.assign(state,{q:'',category:'all',status:'active',scenario:'all',group:'all',unit:'all'});
+    Object.assign(state,{q:'',category:'all',doctrineOnly:false,status:'active',scenario:'all',group:'all',unit:'all'});
     $('#searchInput').value=''; $('#scenarioSelect').value='all'; $('#unitSelect').value='all'; render();
   }
 
@@ -299,7 +307,8 @@
     if(!entry||entry.status!=='active') return;
     const input=$('#bpInput');
     const value=Number(input.value);
-    const step = (currentFormat==='doctrine'||entry.scope==='doctrine') ? (entry.step||1) : 1;
+    const step = currentFormat==='doctrine' ? (entry.step||1) : 1;
+    input.step=entry.scope==='state'?'any':step;
     const valid=input.value!==''&&Number.isFinite(value)&&value!==0&&value>=Number(input.min)&&value<=Number(input.max)&&(entry.scope==='state'||Number.isInteger(value)&&value%step===0);
     input.setAttribute('aria-invalid',String(!valid));
     $('#copySnippet').disabled=!valid;
@@ -322,24 +331,32 @@
     $('#exampleCode').textContent=currentSnippet;
   }
 
-  function showDetail(entry,changeHash=true) {
+  function showDetail(entry,changeHash=true,preferDoctrine=state.doctrineOnly) {
     if(!entry) return;
     currentEntry=entry;
-    currentFormat = entry.scope==='doctrine' ? 'doctrine' : 'dynamic';
+    const docDomain = entry.doctrineGroup;
+    currentFormat = preferDoctrine&&docDomain ? 'doctrine' : 'dynamic';
     const c=categoryFor(entry);
-    const docDomain = entry.doctrineGroup || (entry.scope==='doctrine'?entry.group:'');
     const docDomainLabel = docDomain ? groups.find(g=>g.id===docDomain)?.name : '';
+    const detailNote = () => {
+      if(entry.scope==='state') return 'erzurum yerine hedef Bölgenin kimliğini yaz. Değerler −%90…+%1000 aralığına sınırlanır; mevcut kuyruk yeniden hesaplanmaz.';
+      if(currentFormat==='doctrine') return `Doktrin (${docDomainLabel}) tanımında kullanılır. Temel öğreti ve dal ödülü pozitif katkı ister; ülke ve doktrin katkıları toplanır.`;
+      if(currentFormat==='bonuses') return 'Kurum okulu (ministries/rules.json, schools[].bonuses) tanımında kullanılır.';
+      return 'Kaynağı ayrıca ülkeye vermelisin. dynamic: true, komutla/değişkenle düzenlemeye izin verir. Aynı kaynakta en fazla 16 farklı modifier kullan.';
+    };
     $('#detailEyebrow').textContent=`${sourceLabel(entry)} / ${groupFor(entry)?.name || c.name} / ${statusNames[entry.status]}`;
     const specialNote=entry.status==='inactive'?'Bu anahtarın mevcut oyunda mekanik bağlantısı yok. Bilgi kutusunda görünmesi, bonusu uyguladığı anlamına gelmez.':'Bu anahtar kıtlık sisteminin gösterim özetidir. Genel bir tesire eklemek istikrar veya nüfus etkisi uygulamaz.';
-    const samplesHtml = entry.samples?.length
-      ? `<div class="vanilla-samples"><span class="vanilla-samples-title">Oyundaki gerçek örnekler (Tıkla & uygula)</span><div class="vanilla-samples-list" id="vanillaSamplesList">${entry.samples.map(s=>`<button type="button" class="sample-chip" data-sample-bp="${s.bp}"><small>${esc(s.kind)}</small><span>${esc(s.label)}</span><b>${valueLabel(entry,s.bp)}</b></button>`).join('')}</div></div>`
+    const doctrineSamples = currentFormat==='doctrine' ? doctrineByKey.get(entry.id)?.samples : undefined;
+    const samples = doctrineSamples ?? entry.samples;
+    const samplesHtml = samples?.length
+      ? `<div class="vanilla-samples"><span class="vanilla-samples-title">Oyundaki gerçek örnekler (Tıkla & uygula)</span><div class="vanilla-samples-list" id="vanillaSamplesList">${samples.map(s=>`<button type="button" class="sample-chip" data-sample-bp="${s.bp}"><small>${esc(s.kind)}</small><span>${esc(s.label)}</span><b>${valueLabel(entry,s.bp)}</b></button>`).join('')}</div></div>`
       : '';
     const formatTabsHtml = entry.status==='active' && entry.scope!=='state'
       ? `<div class="format-tabs" id="detailFormatTabs" role="group" aria-label="JSON kaynak formatı"><button type="button" data-format="dynamic" class="${currentFormat==='dynamic'?'active':''}">Ülke Tesiri (dynamic)</button><button type="button" data-format="static" class="${currentFormat==='static'?'active':''}">Lider / Danışman / Teknoloji</button>${docDomain?`<button type="button" data-format="doctrine" class="${currentFormat==='doctrine'?'active':''}">Doktrin (${esc(docDomainLabel)})</button><button type="button" data-format="bonuses" class="${currentFormat==='bonuses'?'active':''}">Kurum Okulu (bonuses)</button>`:''}</div>`
       : '';
     const canBundle = entry.status==='active' && entry.scope!=='state';
     const inBundle = bundle.has(entry.id);
-    $('#detailContent').innerHTML=`<h2 class="detail-title" id="detailTitle">${esc(entry.name)}</h2><div class="detail-key-row"><code>${esc(entry.id)}</code><button class="copy-key" id="copyKey">Anahtarı kopyala</button></div><p class="detail-description">${esc(entry.description)}</p>${entry.doctrineDescription && entry.scope==='country'?`<p class="detail-source"><strong>Doktrin (${esc(docDomainLabel)}) kullanımı:</strong> ${esc(entry.doctrineDescription)}</p>`:''}<div class="detail-facts"><div><span>Ölçek</span><strong>${esc(entry.unit)}</strong></div><div><span>Kullanım kapsamı</span><strong>${docDomain?`Ülke + ${esc(docDomainLabel)} doktrini`:'Ülke kaynakları'} · ${entry.bookmark1939?'1939 tesiri destekli':'1933 kampanyası'}</strong></div></div>${entry.status==='active'?`<div class="value-editor"><label for="bpInput">${entry.scope==='state'?'Yüzde değerini belirle':'bp değerini belirle'}<small>${scaleHint(entry)}</small></label><input id="bpInput" type="number" min="${entry.scope==='state'?-90:-10000}" max="${entry.scope==='state'?1000:10000}" step="${entry.scope==='state'?'any':entry.step||1}" value="${bundle.get(entry.id) ?? defaultValue(entry)}"></div>${samplesHtml}<div class="value-result"><span id="exampleHint"></span><strong id="exampleResult"></strong></div>${formatTabsHtml}<div class="code-label"><span class="small-cap">${entry.scope==='state'?'KOMUT ÖRNEĞİ':'KAYNAK TANIMINA EKLENECEK ALANLAR'}</span><button id="copySnippet">JSON'u kopyala</button></div><pre class="code-box" id="exampleCode"></pre><p class="detail-note" id="detailNote">${entry.scope==='state'?'erzurum yerine hedef Bölgenin kimliğini yaz. Değerler −%90…+%1000 aralığına sınırlanır; mevcut kuyruk yeniden hesaplanmaz.':'Kaynağı ayrıca ülkeye vermelisin. dynamic: true, komutla/değişkenle düzenlemeye izin verir. Aynı kaynakta en fazla 16 farklı modifier kullan.'}</p>`:`<p class="detail-alert">${specialNote}</p>`}<div class="dialog-actions">${canBundle?`<button type="button" class="secondary-btn" id="toggleDetailBundle">${inBundle?'✓ Paketten çıkar':'+ Pakete ekle'}</button>`:'<span></span>'}<button id="copyLink">Bu etkiye bağlantı kopyala ↗</button></div>`;
+    $('#detailContent').innerHTML=`<h2 class="detail-title" id="detailTitle">${esc(entry.name)}</h2><div class="detail-key-row"><code>${esc(entry.id)}</code><button class="copy-key" id="copyKey">Anahtarı kopyala</button></div><p class="detail-description">${esc(entry.description)}</p>${entry.doctrineDescription?`<p class="detail-source"><strong>Doktrin (${esc(docDomainLabel)}) kullanımı:</strong> ${esc(entry.doctrineDescription)}</p>`:''}<div class="detail-facts"><div><span>Ölçek</span><strong>${esc(entry.unit)}</strong></div><div><span>Kullanım kapsamı</span><strong>${docDomain?`Ülke + ${esc(docDomainLabel)} doktrini`:'Ülke kaynakları'} · ${entry.bookmark1939?'1939 tesiri destekli':'1933 kampanyası'}</strong></div></div>${entry.status==='active'?`<div class="value-editor"><label for="bpInput">${entry.scope==='state'?'Yüzde değerini belirle':'bp değerini belirle'}<small>${scaleHint(entry)}</small></label><input id="bpInput" type="number" min="${entry.scope==='state'?-90:-10000}" max="${entry.scope==='state'?1000:10000}" step="${entry.scope==='state'?'any':entry.step||1}" value="${bundle.get(entry.id) ?? defaultValue(entry)}"></div>${samplesHtml}<div class="value-result"><span id="exampleHint"></span><strong id="exampleResult"></strong></div>${formatTabsHtml}<div class="code-label"><span class="small-cap">${entry.scope==='state'?'KOMUT ÖRNEĞİ':'KAYNAK TANIMINA EKLENECEK ALANLAR'}</span><button id="copySnippet">JSON'u kopyala</button></div><pre class="code-box" id="exampleCode"></pre><p class="detail-note" id="detailNote">${detailNote()}</p>`:`<p class="detail-alert">${specialNote}</p>`}<div class="dialog-actions">${canBundle?`<button type="button" class="secondary-btn" id="toggleDetailBundle">${inBundle?'✓ Paketten çıkar':'+ Pakete ekle'}</button>`:'<span></span>'}<button id="copyLink">Bu etkiye bağlantı kopyala ↗</button></div>`;
     $('#copyKey').addEventListener('click',()=>copy(entry.id));
     $('#copyLink').addEventListener('click',()=>copy(new URL('#'+idFor(entry),location.href).href));
     if(canBundle) {
@@ -368,13 +385,7 @@
           if(!btn) return;
           currentFormat=btn.dataset.format;
           $('#detailFormatTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===btn));
-          if($('#detailNote')) {
-            $('#detailNote').textContent = currentFormat==='doctrine'
-              ? `Doktrin (${docDomainLabel}) tanımında kullanılır. Temel öğreti ve dal ödülü pozitif katkı ister; ülke ve doktrin katkıları toplanır.`
-              : currentFormat==='bonuses'
-              ? 'Kurum okulu (ministries/rules.json -> schools[].bonuses) tanımında kullanılır.'
-              : 'Kaynağı ayrıca ülkeye vermelisin. dynamic: true, komutla/değişkenle düzenlemeye izin verir. Aynı kaynakta en fazla 16 farklı modifier kullan.';
-          }
+          $('#detailNote').textContent=detailNote();
           updateExample();
         });
       }
@@ -404,6 +415,10 @@
   $('#searchInput').addEventListener('input',event=>{state.q=event.target.value;render();});
   $('#scenarioSelect').addEventListener('change',event=>{state.scenario=event.target.value;render();});
   $('#unitSelect').addEventListener('change',event=>{state.unit=event.target.value;render();});
+  $('#doctrineFilter').addEventListener('change',event=>{
+    state.doctrineOnly=event.target.checked;
+    render();
+  });
   $('#resetFilters').addEventListener('click',reset);
   $('#emptyReset').addEventListener('click',reset);
   $('#emptyAllStatuses').addEventListener('click',()=>{state.status='all';render();});
@@ -425,8 +440,15 @@
   }
   $('#detailDialog').addEventListener('close',()=>{history.replaceState(null,'',location.pathname+location.search);currentEntry=null;});
   document.addEventListener('keydown',event=>{const shortcut=(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k';if((shortcut||event.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))&&!$('#detailDialog').open&&!$('#bundleDialog').open){event.preventDefault();$('#searchInput').focus();}});
-  window.addEventListener('hashchange',()=>{const entry=entries.find(e=>idFor(e)===location.hash.slice(1));if(entry)showDetail(entry,false);});
+  function showLinkedDetail() {
+    const hash=location.hash.slice(1);
+    const legacyDoctrineLink=hash.startsWith('doktrin-');
+    const id=legacyDoctrineLink?hash.slice('doktrin-'.length):hash;
+    const entry=entries.find(e=>idFor(e)===id&&(!legacyDoctrineLink||e.doctrineGroup));
+    showDetail(entry,false,legacyDoctrineLink||state.doctrineOnly);
+  }
+
+  window.addEventListener('hashchange',showLinkedDetail);
   render();
-  const linked=entries.find(entry=>idFor(entry)===location.hash.slice(1));
-  if(linked) showDetail(linked,false);
+  showLinkedDetail();
 })();

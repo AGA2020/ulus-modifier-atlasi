@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#252724">
   <meta name="description" content="ULUS içerik yazarları için modifier atlası. Kategorileri keşfedin, oyundaki gerçek denge örneklerini görün ve tekli veya çoklu JSON paketlerini kopyalayın.">
   <title>Modifier Atlası · ULUS</title>
-  <script>window.ATLAS_VERSION='202611162212';(()=>{const check=()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}};check();addEventListener('pageshow',e=>{if(e.persisted)check();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});document.addEventListener('DOMContentLoaded',()=>{for(const n of document.querySelectorAll('[data-atlas-version]'))n.textContent='Sürüm '+window.ATLAS_VERSION;});})();</script>
-  <script src="theme.js?v=202611162212"></script>
+  <script>window.ATLAS_VERSION='202611220135';(()=>{const check=()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}};check();addEventListener('pageshow',e=>{if(e.persisted)check();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});document.addEventListener('DOMContentLoaded',()=>{for(const n of document.querySelectorAll('[data-atlas-version]'))n.textContent='Sürüm '+window.ATLAS_VERSION;});})();</script>
+  <script src="theme.js?v=202611220135"></script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=202611162212">
-  <link rel="stylesheet" href="theme.css?v=202611162212">
-  <link rel="stylesheet" href="atlas.css?v=202611162212">
-  <script src="data.js?v=202611162212" defer></script>
-  <script src="app.js?v=202611162212" defer></script>
+  <link rel="stylesheet" href="style.css?v=202611220135">
+  <link rel="stylesheet" href="theme.css?v=202611220135">
+  <link rel="stylesheet" href="atlas.css?v=202611220135">
+  <script src="data.js?v=202611220135" defer></script>
+  <script src="app.js?v=202611220135" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#catalogue">Kataloğa geç</a>
@@ -43,14 +43,17 @@
           <div class="overview-heading"><strong>123 <span>ülke anahtarı bağlı</span></strong><span>133 ülke anahtarı</span></div>
           <div class="overview-bar" aria-hidden="true"><i></i><b></b><span></span></div>
           <div class="chart-legend"><span><i class="dot active-dot"></i>123 bağlı</span><span><i class="dot inactive-dot"></i>8 bağlantısız</span><span><i class="dot system-dot"></i>2 sisteme özel</span></div>
-          <div class="graphic-bottom"><span>+ 43 doktrin · 2 Bölge</span><span>58 ülke anahtarı · 1939</span></div>
+          <div class="graphic-bottom"><span>43 doktrin uyumlu · 2 Bölge kartı</span><span>58 ülke anahtarı · 1939</span></div>
         </div>
       </section>
 
       <section class="catalogue" id="catalogue" aria-labelledby="catalogueTitle">
         <div class="catalogue-top"><div><h2 id="catalogueTitle">Etki kütüphanesi</h2></div><button class="text-button" id="resetFilters">Filtreleri temizle <span>↺</span></button></div>
         <div class="search-row"><div class="search-box"><span id="searchIcon" aria-hidden="true"></span><input id="searchInput" type="search" placeholder="Etki, anahtar veya açıklama ara…" autocomplete="off" aria-label="Modifier ara"><kbd>/</kbd></div><label class="scenario-select"><span>Kullanım kapsamı</span><select id="scenarioSelect" aria-label="Senaryo kapsamı"><option value="all">Tüm kullanımlar</option><option value="1939">1939 başlangıç tesiri</option></select></label><label class="scenario-select scale-select"><span>Değer ölçeği</span><select id="unitSelect" aria-label="Değer ölçeği"><option value="all">Tüm ölçekler</option><option value="ratio">Oran · %</option><option value="points">Puan · +</option><option value="count">Adet · #</option></select></label></div>
-        <div class="filter-row"><div class="status-tabs" role="group" aria-label="Çalışma durumu"><button data-status="active" class="selected" aria-pressed="true">Kullanılabilir <b>125</b></button><button data-status="all" aria-pressed="false">Tümü <b>135</b></button><button data-status="inactive" aria-pressed="false">Bağlantısız <b>8</b></button><button data-status="system" aria-pressed="false">Sisteme özel <b>2</b></button></div></div>
+        <div class="filter-row">
+          <div class="status-tabs" role="group" aria-label="Çalışma durumu"><button data-status="active" class="selected" aria-pressed="true">Kullanılabilir <b>125</b></button><button data-status="all" aria-pressed="false">Tümü <b>135</b></button><button data-status="inactive" aria-pressed="false">Bağlantısız <b>8</b></button><button data-status="system" aria-pressed="false">Sisteme özel <b>2</b></button></div>
+          <label class="doctrine-filter"><input type="checkbox" id="doctrineFilter"> Doktrinde kullanılabilir</label>
+        </div>
         <div id="scopeNote" class="scope-note" hidden></div>
         <div class="results-heading"><div><div class="results-title"><h3 id="currentCategory">Bütün etkiler</h3><span class="result-count" id="resultCount" role="status" aria-live="polite"></span></div><p id="categoryDescription"></p></div><a class="scale-help" href="#guide">100 bp ne demek? <span>↗</span></a></div>
         <div id="armyFilters" class="army-filters" role="group" aria-label="Kuvvet alanı" hidden></div>
@@ -73,7 +76,7 @@
         <article><span class="small-cap">TOPLAM & SINIR</span><h3>Bonuslar önce toplanır.</h3><p>Aynı anahtarın kaynakları toplanır. Normal oran çarpanı %10–%300 aralığında tutulur; −%100 her oranı sıfırlamaz. Dış borçlanma, puan ve adet anahtarları kendi sınırlarını kullanır.</p></article>
         <article><span class="small-cap">DİNAMİK İÇERİK</span><h3>Değer hikâyeyle değişebilir.</h3><p>Genel ülke kaynağında <code>"dynamic": true</code> kullan. Formül: bp + değişken × factor. Kaynağı önce ülkeye ver; ardından <code>add_modifier</code> veya <code>set_modifier</code> ile değiştir. Bu format doktrin tanımına uygulanmaz.</p></article>
       </section>
-      <footer><div class="footer-brand">ULUS<span>MODIFIER ATLASI</span></div><p>16 Kasım 2026 · 133 ülke + 43 doktrin + 2 Bölge tanımı · 134 farklı anahtar<br>43 doktrin anahtarının tamamı ülke tesiri, lider, danışman ve teknolojilerde de çalışır. Kod bağlantıları EditMode testleriyle doğrulandı.</p><span class="footer-version" data-atlas-version></span><a href="#pageTitle">Başa dön ↑</a></footer>
+      <footer><div class="footer-brand">ULUS<span>MODIFIER ATLASI</span></div><p>16 Kasım 2026 · 133 ülke kartı + 2 Bölge kartı · 43 doktrin uyumlu<br>43 doktrin anahtarının tamamı ülke tesiri, lider, danışman ve teknolojilerde de çalışır. Kod bağlantıları EditMode testleriyle doğrulandı.</p><span class="footer-version" data-atlas-version></span><a href="#pageTitle">Başa dön ↑</a></footer>
     </main>
   </div>
 
