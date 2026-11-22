@@ -1,0 +1,71 @@
+/* Alanlar sayfası (alanlar.html). Renk ve yazı değişkenleri theme.css'ten gelir; GitHub Pages sürümünün eski temasında olmayanlar için var() yedekleri vardır. */
+.area-main{max-width:1280px;margin:0 auto;padding:42px 48px 80px}
+.area-hero{padding-bottom:24px;border-bottom:1px solid var(--line)}
+.area-hero h1{margin:0 0 12px}
+.area-hero p{margin:0;max-width:72ch;color:var(--secondary-ink,var(--ink));font-size:16px;line-height:1.6}
+.area-hero .area-rule{margin-top:12px;color:var(--muted);font-size:14px}
+.area-catalogue{padding-top:24px}
+.area-toolbar{display:flex;gap:14px;align-items:stretch}
+.area-toolbar .search-box{flex:1}
+.area-view{display:flex;border:1px solid var(--line)}
+.area-view button{border:0;background:transparent;color:var(--muted);padding:0 16px;font:600 14px/1 var(--utility,"Barlow Condensed","Arial Narrow",sans-serif);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.area-view button[aria-pressed="true"]{color:var(--ink);background:var(--soft-surface,var(--red-soft));box-shadow:inset 0 -2px 0 var(--brick,var(--red))}
+.area-legend{display:flex;flex-wrap:wrap;gap:8px 20px;list-style:none;margin:14px 0 18px;padding:0;color:var(--muted);font-size:13px}
+.area-legend li{display:flex;align-items:center;gap:7px}
+.chip-swatch{width:12px;height:12px;display:inline-block}
+.chip-swatch.lead,.share-bar i.lead{background:var(--red)}
+.chip-swatch.top,.share-bar i.top{background:var(--gold)}
+.chip-swatch.occasional,.share-bar i.occasional{background:var(--status-border,var(--muted))}
+.area-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.area-grid.people-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.area-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:18px;background:var(--white);border:1px solid var(--line);scroll-margin-top:96px}
+.area-card:target{border-color:var(--red);box-shadow:inset 0 -2px 0 var(--red)}
+.area-card>header{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.area-card h2{margin:0;font:600 20px/1.2 var(--utility,"Barlow Condensed","Arial Narrow",sans-serif);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.area-anchor{color:var(--muted);text-decoration:none;font-family:var(--mono,Consolas,monospace);font-size:13px}
+.area-anchor:hover{color:var(--red)}
+.area-description{margin:0;color:var(--secondary-ink,var(--ink));font-size:14px;line-height:1.5}
+.share-bar{display:flex;height:6px;background:var(--soft-surface,var(--red-soft));overflow:hidden}
+.share-bar i{display:block;min-width:2px}
+.share-bar i+i{box-shadow:inset 1px 0 0 var(--white)}
+.person-list{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.person-chip{display:inline-flex;align-items:baseline;gap:8px;padding:6px 10px;border:1px solid var(--line);font-size:14px}
+.person-chip strong{font-weight:500;color:var(--ink)}
+.person-chip span{font-family:var(--mono,Consolas,monospace);font-size:12px;color:var(--muted)}
+.person-chip.lead{border-color:var(--red);box-shadow:inset 3px 0 0 var(--red)}
+.person-chip.top{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.person-list.minor .person-chip{padding:3px 8px;font-size:13px;color:var(--muted)}
+.person-list.minor .person-chip strong{color:var(--secondary-ink,var(--ink))}
+.area-none{margin:0;color:var(--muted);font-size:13px}
+.area-design{margin:0;font-size:14px;color:var(--secondary-ink,var(--ink))}
+.area-design .small-cap{color:var(--muted);margin-right:6px}
+.area-docs{margin:0;display:flex;flex-wrap:wrap;gap:6px}
+.area-docs code{font-size:11px;color:var(--muted);background:var(--soft-surface,var(--red-soft));padding:2px 6px;overflow-wrap:anywhere}
+.area-meta{margin-top:auto;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px 16px;font:500 13px/1 var(--utility,"Barlow Condensed","Arial Narrow",sans-serif);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.person-areas{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.person-area{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.person-area:last-child{border-bottom:0}
+.person-area a{color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.person-area a:hover{color:var(--red)}
+.person-area>span:last-child{font-family:var(--mono,Consolas,monospace);font-size:12px;color:var(--muted);text-align:right}
+.person-area-role{font:600 11px/1 var(--utility,"Barlow Condensed","Arial Narrow",sans-serif);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.person-area.lead .person-area-role{color:var(--red)}
+.person-area.top .person-area-role{color:var(--gold)}
+.person-area.occasional a{color:var(--secondary-ink,var(--ink))}
+.area-empty{color:var(--muted)}
+.area-main>footer{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-top:40px}
+.area-footer-links{display:flex;gap:16px;flex-wrap:wrap}
+.area-generated{font-size:12px;color:var(--muted);margin-left:auto}
+@media(max-width:1100px){.area-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){
+  .area-main{padding:24px 16px 64px}
+  .area-header nav a:first-child{display:inline}
+  .area-header nav [aria-current="page"]{display:none}
+  .area-header nav{gap:10px}
+  .area-toolbar{flex-direction:column}
+  .area-view{height:44px}
+  .area-view button{flex:1}
+  .area-grid{grid-template-columns:1fr}
+  .area-generated{margin-left:0}
+}
+@media(max-width:400px){.area-header nav a[href="bolgeler.html"]{display:none}}
