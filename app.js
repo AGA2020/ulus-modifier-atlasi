@@ -289,6 +289,10 @@
     }).join('');
     $('#resultCount').textContent = `${filtered.length} etki`;
     $('#emptyState').hidden = filtered.length>0;
+    if(!filtered.length) {
+      const query = state.q.trim();
+      $('#resourceSearchLink').href = query ? 'kaynaklar.html?'+new URLSearchParams({q:query}) : 'kaynaklar.html';
+    }
     $('#currentCategory').textContent = category.name;
     $('#categoryDescription').textContent=categoryDescriptions[category.id];
     const otherStatuses=entries.filter(entry=>matches(entry,{status:'all'})).length;

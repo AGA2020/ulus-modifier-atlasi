@@ -1,0 +1,36 @@
+.resource-main{max-width:1280px;margin:0 auto;padding:42px 48px 80px}
+.resource-hero{padding-bottom:24px;border-bottom:1px solid var(--line)}
+.resource-hero h1{margin:0 0 12px}
+.resource-hero p{margin:0;max-width:64ch;color:var(--secondary-ink);font-size:16px;line-height:1.6}
+.resource-catalogue{padding-top:24px}
+.resource-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:16px 0 24px}
+.resource-option{display:grid;gap:5px;text-align:left;min-height:58px;padding:9px 12px;background:var(--white);border:1px solid var(--line);border-radius:0}
+.resource-option:hover,.resource-option[aria-pressed="true"]{border-color:var(--red)}
+.resource-option[aria-pressed="true"]{box-shadow:inset 0 -2px 0 var(--red)}
+.resource-option strong{font-size:15px}
+.resource-option code,.resource-detail code{font-family:var(--mono,Consolas,monospace)}
+.resource-option code,.resource-empty{color:var(--muted)}
+.resource-detail{padding:24px;background:var(--white);border:1px solid var(--line)}
+.resource-detail h2,.resource-detail h3{margin:0}
+.resource-title-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.resource-detail p{color:var(--secondary-ink);line-height:1.6;margin:6px 0 0}
+.resource-coverage{width:100%;border-collapse:collapse;margin:16px 0 22px;font-size:14px}
+.resource-coverage th,.resource-coverage td{text-align:left;border-bottom:1px solid var(--line);padding:8px 10px}
+.resource-coverage th{color:var(--ink)}
+.resource-coverage td{color:var(--secondary-ink)}
+.resource-examples{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.resource-example{min-width:0;padding:14px;border:1px solid var(--line)}
+.resource-example h3{font-size:18px}
+.resource-example .code-label{margin-top:10px}
+.resource-example .code-box{margin-bottom:0;overflow:auto;font-size:12px}
+.resource-example .resource-path{font-size:12px;overflow-wrap:anywhere}
+.resource-footer-links{display:flex;gap:16px;flex-wrap:wrap}
+@media(max-width:740px){
+  .resource-main{padding:24px 16px 64px}
+  .resource-header nav a:first-child{display:inline}
+  .resource-header nav [aria-current="page"]{display:none}
+  .resource-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .resource-detail{padding:16px}
+  .resource-examples{grid-template-columns:1fr}
+  .resource-coverage th,.resource-coverage td{padding:8px 4px;font-size:12px}
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d181d">
+  <meta name="description" content="ULUS kaynak kimlikleri, 1933 ve 1939 başlangıç kapsamı ve stok, yatak ve çıkarım için JSON örnekleri.">
+  <title>Kaynaklar · ULUS</title>
+  <script>window.ATLAS_VERSION='202611220423';(()=>{const check=()=>{try{fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v||!v.version||v.version===window.ATLAS_VERSION)return;const u=new URL(location.href);if(u.searchParams.get('_v')===v.version)return;u.searchParams.set('_v',v.version);location.replace(u.href);}).catch(()=>{});}catch(e){}};check();addEventListener('pageshow',e=>{if(e.persisted)check();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});document.addEventListener('DOMContentLoaded',()=>{for(const n of document.querySelectorAll('[data-atlas-version]'))n.textContent='Sürüm '+window.ATLAS_VERSION;});})();</script>
+  <script src="theme.js?v=202611220423"></script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500&family=Oswald:wght@500;600&display=swap">
+  <link rel="stylesheet" href="style.css?v=202611220423">
+  <link rel="stylesheet" href="atlas.css?v=202611220423">
+  <link rel="stylesheet" href="theme.css?v=202611220423">
+  <link rel="stylesheet" href="resources.css?v=202611220423">
+  <script src="resources-data.js?v=202611220423" defer></script>
+  <script src="resources.js?v=202611220423" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#resourceCatalogue">Kaynaklara geç</a>
+  <header class="topbar resource-header">
+    <a class="brand" href="./" aria-label="ULUS Modifier Atlası ana sayfa">ULUS<span>İÇERİK ATÖLYESİ</span></a>
+    <nav aria-label="Üst menü"><a href="./">Modifier atlası</a><a href="bolgeler.html">Bölge listesi</a><a href="kaynaklar.html" aria-current="page" class="nav-current">Kaynaklar</a><button type="button" class="theme-toggle" id="themeToggle" aria-label="Karanlık mod" aria-pressed="true" title="Aydınlık moda geç"><svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></svg><svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10Z"/></svg></button></nav>
+  </header>
+
+  <main class="resource-main">
+    <section class="resource-hero" aria-labelledby="pageTitle">
+      <h1 id="pageTitle">Kaynaklar</h1>
+      <p>Ülkeye stok vermek, haritaya yatak eklemek veya çıkarımı artırmak için bir kaynak seç.</p>
+    </section>
+
+    <section id="resourceCatalogue" class="resource-catalogue" aria-label="Kaynak kataloğu">
+      <div class="search-row">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="resourceSearch" type="search" placeholder="Kömür, çelik, demir cevheri…" autocomplete="off" aria-label="Kaynak adı veya kimliği ara">
+        </div>
+        <label class="scenario-select"><span>JSON örneklerinin senaryosu</span><select id="resourceScenario"></select></label>
+      </div>
+      <div id="resourceList" class="resource-list" role="group" aria-label="Kaynak seç"></div>
+      <p class="resource-empty" id="resourceEmpty" role="status" hidden>Bu aramayla eşleşen kaynak bulunamadı.</p>
+      <article id="resourceDetail" class="resource-detail" aria-labelledby="resourceTitle" hidden></article>
+      <div id="resourceToast" class="toast" role="status" aria-live="polite"></div>
+      <noscript><p>Kaynakları aramak ve JSON örneklerini görmek için JavaScript'i etkinleştir.</p></noscript>
+    </section>
+
+    <footer>
+      <nav class="resource-footer-links" aria-label="Atlas sayfaları"><a href="./">Modifier atlası</a><a href="bolgeler.html">Bölge listesi</a></nav>
+      <span class="footer-version" data-atlas-version></span>
+    </footer>
+  </main>
+</body>
+</html>
