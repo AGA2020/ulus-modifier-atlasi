@@ -1,6 +1,6 @@
-// Region map for bolgeler.html: one state-id raster (regions-map.png, R = low byte, G = high byte of state index + 1)
+// Region map for bolgeler.html: one state-id raster (regions-map.png = PNG içerik, R = low byte, G = high byte of state index + 1)
 // is coloured in the browser by owner, so theme and country changes need no extra image. Opening a region loads the
-// province-id raster (regions-provinces.png, stable definition.csv ids) and its details once. Presentation only.
+// province-id raster (regions-provinces.png = PNG içerik, stable definition.csv ids) and its details once. Presentation only.
 window.RegionMap = (() => {
   'use strict';
   let canvas, ctx, tip, data, options;
@@ -20,6 +20,25 @@ window.RegionMap = (() => {
   };
   const mix = (a, b, t) => [0, 1, 2].map(i => Math.round(a[i] * (1 - t) + b[i] * t));
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name);
+
+  // Kimlik raster'ları <img> ile değil fetch ile okunur: Hostinger CDN'i "Accept: image/webp" gören görsel isteğini
+  // kayıplı WebP'ye çeviriyor ve piksel = kimlik değerleri bozuluyordu (harita kırmızı/siyah kalıyordu). fetch'in
+  // Accept'i */* olduğundan dosya baytı baytına gelir; renk yönetimi de kapatılır ki değerler değişmesin.
+  async function loadRaster(url) {
+    const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+    if (!response.ok) throw new Error(`raster ${response.status}`);
+    const blob = new Blob([await response.arrayBuffer()], { type: 'image/png' });
+    const bitmap = await createImageBitmap(blob, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+    const reader = document.createElement('canvas');
+    reader.width = bitmap.width; reader.height = bitmap.height;
+    const readerCtx = reader.getContext('2d', { willReadFrequently: true });
+    readerCtx.drawImage(bitmap, 0, 0);
+    bitmap.close?.();
+    const raw = readerCtx.getImageData(0, 0, reader.width, reader.height).data;
+    const grid = new Uint16Array(reader.width * reader.height);
+    for (let p = 0, o = 0; p < grid.length; p++, o += 4) grid[p] = raw[o] | (raw[o + 1] << 8);
+    return { reader, readerCtx, grid, width: reader.width, height: reader.height };
+  }
 
   function paintBase() {
     if (!ids) return;
@@ -42,7 +61,7 @@ window.RegionMap = (() => {
       for (let x = 0; x < width; x++, p++) {
         const id = ids[p];
         let color;
-        if (!id) color = sea;
+        if (!id || id >= ownerOf.length) color = sea;
         else {
           const owner = ownerOf[id];
           const right = x + 1 < width ? ids[p + 1] : id, down = y + 1 < height ? ids[p + width] : id;
@@ -139,16 +158,9 @@ window.RegionMap = (() => {
     if (!provincePromise)
       provincePromise = Promise.all([
         fetch(options.provinceSrc).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-        new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = options.provinceImage; }),
-      ]).then(([info, img]) => {
-        const reader = document.createElement('canvas');
-        reader.width = img.naturalWidth; reader.height = img.naturalHeight;
-        const readerCtx = reader.getContext('2d', { willReadFrequently: true });
-        readerCtx.drawImage(img, 0, 0);
-        const raw = readerCtx.getImageData(0, 0, reader.width, reader.height).data;
-        const grid = new Uint16Array(reader.width * reader.height);
-        for (let p = 0, o = 0; p < grid.length; p++, o += 4) grid[p] = raw[o] | (raw[o + 1] << 8);
-        provIds = grid; provinceInfo = info;
+        loadRaster(options.provinceImage),
+      ]).then(([info, raster]) => {
+        provIds = raster.grid; provinceInfo = info;
         highlightCache.clear(); draw();
         return info;
       }).catch(error => { provincePromise = null; throw error; });
@@ -340,26 +352,16 @@ window.RegionMap = (() => {
     new ResizeObserver(() => { clampView(); draw(); }).observe(canvas);
     new MutationObserver(paintBase).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-    const image = new Image();
-    image.decoding = 'async';
-    image.onload = () => {
-      width = image.naturalWidth; height = image.naturalHeight;
-      const reader = document.createElement('canvas');
-      reader.width = width; reader.height = height;
-      const readerCtx = reader.getContext('2d', { willReadFrequently: true });
-      readerCtx.drawImage(image, 0, 0);
-      const raw = readerCtx.getImageData(0, 0, width, height).data;
-      ids = new Uint16Array(width * height);
-      for (let p = 0, o = 0; p < ids.length; p++, o += 4) ids[p] = raw[o] | (raw[o + 1] << 8);
-      base = reader; baseCtx = readerCtx;
+    loadRaster(opts.src).then(raster => {
+      width = raster.width; height = raster.height;
+      ids = raster.grid;
+      base = raster.reader; baseCtx = raster.readerCtx;
       document.getElementById('mapLoading').hidden = true;
       paintBase();
       fitDefault();
       // A link that names a region (?bolge=) opens on that region, not on the whole country.
       if (selectedIndex && data.states[selectedIndex - 1].box) fitBox(data.states[selectedIndex - 1].box, 1.8);
-    };
-    image.onerror = () => { document.getElementById('mapLoading').textContent = 'Harita yüklenemedi; liste yine kullanılabilir.'; };
-    image.src = opts.src;
+    }).catch(() => { document.getElementById('mapLoading').textContent = 'Harita yüklenemedi; liste yine kullanılabilir.'; });
   }
 
   return {

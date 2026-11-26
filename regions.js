@@ -21,7 +21,26 @@
     state.port = state.ports.length ? state.ports[0] : 0;
   }
 
-  const view = { country: '', query: '', sort: 'name', dir: 1, limit: PAGE, selected: '', province: 0 };
+  // Change list against the previous release (build_regions.py). `added` alone is a province split inside an
+  // unchanged border, so only the other kinds count as "re-check this region".
+  const changes = data.changes || null;
+  const changed = changes ? changes.states : {};
+  const removedById = new Map((changes ? changes.removed : []).map(r => [r.id, r]));
+  const stateName = id => stateById.get(id)?.name || removedById.get(id)?.name || id;
+  function changeTags(c) {
+    if (!c) return [];
+    const tags = [];
+    if (c.new) tags.push(['Yeni bölge', c.from ? `Province'leri şuradan geldi: ${c.from.map(stateName).join(', ')}` : 'Önceki yayında yoktu']);
+    if (c.owner) tags.push(['Sahip değişti', `Önceki sahip: ${countryName(c.owner)} · ${c.owner}`]);
+    if (c.name) tags.push(['Ad değişti', `Önceki ad: ${c.name}`]);
+    if (c.in || c.out || c.deleted) tags.push(['Sınır değişti', 'Province kümesi değişti; ayrıntı harita kartında']);
+    return tags;
+  }
+  const needsCheck = state => changeTags(changed[state.id]).length > 0;
+  const checkCount = data.states.filter(needsCheck).length;
+  const splitCount = Object.values(changed).filter(c => !changeTags(c).length).length;
+
+  const view = { country: '', query: '', sort: 'name', dir: 1, limit: PAGE, selected: '', province: 0, changes: false };
 
   function readUrl() {
     const params = new URLSearchParams(location.search);
@@ -35,6 +54,7 @@
     view.selected = selected ? selected.id : '';
     if (selected && !view.country) view.country = selected.owner;
     view.province = selected ? Number(params.get('province')) || 0 : 0;
+    view.changes = Boolean(changes) && params.get('degisen') === '1';
   }
 
   function writeUrl() {
@@ -45,13 +65,14 @@
     if (view.dir < 0) params.set('yon', 'azalan');
     if (view.selected) params.set('bolge', view.selected);
     if (view.selected && view.province) params.set('province', view.province);
+    if (view.changes) params.set('degisen', '1');
     const query = params.toString();
     history.replaceState(null, '', query ? `?${query}` : location.pathname);
   }
 
   function filtered() {
     const words = fold(view.query).split(' ').filter(Boolean);
-    const rows = data.states.filter(s => (!view.country || s.owner === view.country) && words.every(w => s.search.includes(w)));
+    const rows = data.states.filter(s => (!view.country || s.owner === view.country) && (!view.changes || needsCheck(s)) && words.every(w => s.search.includes(w)));
     const key = view.sort;
     rows.sort((a, b) => {
       let result;
@@ -90,6 +111,11 @@
     const name = el('td', 'col-name');
     const title = el('div', 'state-name', state.name);
     if (state.capital) title.append(el('span', 'capital-badge', 'Başkent'));
+    for (const [label, detail] of changeTags(changed[state.id])) {
+      const badge = el('span', 'change-badge', label);
+      badge.title = `${changes.since} kesitinden bu yana. ${detail}`;
+      title.append(badge);
+    }
     const id = el('button', 'copy-id', state.id);
     id.type = 'button';
     id.title = 'Bölge kimliğini kopyala';
@@ -173,7 +199,79 @@
       button.dataset.dir = active ? (view.dir > 0 ? '↑' : '↓') : '';
     }
     summary(rows);
+    if (changes) {
+      $('changesFilter').checked = view.changes;
+      $('changesRemoved').hidden = !view.changes || !changes.removed.length;
+    }
     writeUrl();
+  }
+
+  // "Son güncellemede değişenler" bar, built here so the panel and GitHub Pages pages share it without HTML edits.
+  function buildChangesBar() {
+    if (!changes) return;
+    const bar = el('div', 'changes-bar');
+    const toggle = el('label', 'changes-toggle');
+    const box = Object.assign(document.createElement('input'), { type: 'checkbox', id: 'changesFilter' });
+    toggle.append(box, ' Son güncellemede değişenler ', el('b', '', numberFormat.format(checkCount)));
+    const kinds = [
+      ['yeni', s => changed[s.id]?.new], ['sahibi değişen', s => changed[s.id]?.owner],
+      ['adı değişen', s => changed[s.id]?.name], ['sınırı değişen', s => { const c = changed[s.id]; return c && !c.new && (c.in || c.out || c.deleted); }],
+    ].map(([label, test]) => [label, data.states.filter(test).length]).filter(([, n]) => n);
+    const parts = kinds.map(([label, n]) => `${n} ${label}`);
+    if (changes.removed.length) parts.push(`${changes.removed.length} kaldırılan`);
+    let note = `${changes.since} kesitinden bu yana: ${parts.length ? parts.join(', ') + ' bölge.' : 'bölge kimliği, sahip ve sınır değişmedi.'}`;
+    if (splitCount) note += ` Ayrıca ${numberFormat.format(splitCount)} bölgede yalnız yeni province kimlikleri var (province bölündü, bölge sınırı aynı); ayrıntısı harita kartında.`;
+    const removed = el('div', 'changes-removed');
+    removed.id = 'changesRemoved';
+    removed.hidden = true;
+    removed.append(el('strong', '', 'Kaldırılan bölgeler'));
+    for (const r of changes.removed) {
+      const line = el('div', 'removed-line');
+      const id = el('button', 'copy-id', r.id);
+      id.type = 'button';
+      id.dataset.copy = r.id;
+      line.append(id, el('span', '', ` ${r.name} · ${r.owner}` + (r.to.length ? ` → province'leri: ${r.to.map(stateName).join(', ')}` : '')));
+      if (r.usedIn) line.append(el('span', 'removed-used', ` İçerikte hâlâ geçiyor: ${r.usedIn.join(', ')}`));
+      removed.append(line);
+    }
+    bar.append(toggle, el('span', 'changes-note', note), removed);
+    document.querySelector('.search-row').after(bar);
+    box.addEventListener('change', () => { view.changes = box.checked; view.limit = PAGE; render(); });
+    removed.addEventListener('click', event => { const t = event.target.closest('[data-copy]'); if (t) copy(t.dataset.copy, `“${t.dataset.copy}”`); });
+  }
+
+  // Map card block: what moved in this region since the previous release; province id lists copy as JSON.
+  function renderCardChange(state) {
+    const box = $('cardChange');
+    const c = state && changed[state.id];
+    box.hidden = !c;
+    if (!c) return;
+    const names = ids => ids.map(stateName).join(', ');
+    const lines = [];
+    if (c.new) lines.push(['Yeni bölge', c.from ? `province'leri: ${names(c.from)}` : 'önceki yayında yoktu']);
+    if (c.owner) lines.push(['Önceki sahip', `${countryName(c.owner)} · ${c.owner}`]);
+    if (c.name) lines.push(['Önceki ad', c.name]);
+    if (c.in) lines.push(['Gelen province', names(c.inFrom), c.in]);
+    if (c.out) lines.push(['Giden province', names(c.outTo), c.out]);
+    if (c.deleted) lines.push(['Silinen province', '', c.deleted]);
+    if (c.added) lines.push(['Yeni province kimliği', '', c.added]);
+    const dl = el('dl');
+    for (const [label, value, ids] of lines) {
+      const d = el('div');
+      const dd = el('dd');
+      if (ids) {
+        const button = el('button', 'copy-id', String(ids.length));
+        button.type = 'button';
+        button.title = 'Province kimliklerini JSON dizisi olarak kopyala';
+        button.dataset.copyList = JSON.stringify(ids);
+        button.dataset.label = label;
+        dd.append(button);
+        if (value) dd.append(el('span', 'change-from', value));
+      } else dd.textContent = value;
+      d.append(el('dt', '', label), dd);
+      dl.append(d);
+    }
+    box.replaceChildren(el('span', 'small-cap', `${changes.since.toLocaleUpperCase('tr')} KESİTİNDEN BU YANA`), dl);
   }
 
   let toastTimer;
@@ -233,6 +331,7 @@
     map?.select(state ? state.index : 0, fit);
     const card = $('mapCard');
     card.hidden = !state;
+    renderCardChange(state);
     if (!state) return;
     $('cardName').textContent = state.name;
     $('cardId').textContent = state.id;
@@ -321,13 +420,23 @@
     select.append(new Option(`Tüm ülkeler (${data.countries.length})`, ''));
     for (const c of countries) select.append(new Option(`${c.name} · ${c.tag} (${c.states})`, c.tag));
 
+    const cardChange = el('div', 'card-change');
+    cardChange.id = 'cardChange';
+    cardChange.hidden = true;
+    $('cardStats').after(cardChange);
+    cardChange.addEventListener('click', event => {
+      const t = event.target.closest('[data-copy-list]');
+      if (t) copy(t.dataset.copyList, `${stateName(view.selected)}: ${t.dataset.label.toLocaleLowerCase('tr')}`);
+    });
+    buildChangesBar();
+
     readUrl();
     select.value = view.country;
     $('searchInput').value = view.query;
 
     select.addEventListener('change', () => setCountry(select.value));
     $('searchInput').addEventListener('input', event => { view.query = event.target.value; view.limit = PAGE; render(); });
-    const reset = () => { view.query = ''; $('searchInput').value = ''; view.sort = 'name'; view.dir = 1; selectState(null); setCountry(''); };
+    const reset = () => { view.query = ''; $('searchInput').value = ''; view.changes = false; view.sort = 'name'; view.dir = 1; selectState(null); setCountry(''); };
     $('resetFilters').addEventListener('click', reset);
     $('emptyReset').addEventListener('click', reset);
     $('showMore').addEventListener('click', () => { view.limit += PAGE; render(); });
@@ -377,7 +486,7 @@
     });
     render();
     map?.init(data, {
-      src: 'regions-map.png?v=202611261459', provinceImage: 'regions-provinces.png?v=202611261459', provinceSrc: 'regions-provinces.json?v=202611261459',
+      src: 'regions-map.png?v=202611261514', provinceImage: 'regions-provinces.png?v=202611261514', provinceSrc: 'regions-provinces.json?v=202611261514',
       countryName, onSelect: pickFromMap, onProvince: pickProvince, onProvinceError: provinceError,
     });
     map?.setCountry(view.country, true);

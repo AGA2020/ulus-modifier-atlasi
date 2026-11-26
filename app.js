@@ -45,6 +45,31 @@
     regional:'Ülke tesiri yerine hedef Bölgeye komutla uygulanan değiştiriciler.',
   };
   const groups = [{id:'all',name:'Tüm kuvvetler'},{id:'land',name:'Kara'},{id:'naval',name:'Deniz'},{id:'air',name:'Hava'},{id:'support',name:'İkmal & komuta'}];
+  // Hero, overview graphic and footer numbers come from the data, so a regenerated catalogue never leaves stale counts
+  // in the HTML (the GitHub Pages copy has its own index.html with the same classes).
+  (() => {
+    const country = entries.filter(entry=>entry.scope==='country');
+    const count = status => country.filter(entry=>entry.status===status).length;
+    const [active, inactive, system] = [count('active'), count('inactive'), count('system')];
+    const regional = entries.filter(entry=>entry.scope==='state').length;
+    const doctrines = sourceEntries.length - entries.length;
+    const bookmark = country.filter(entry=>entry.bookmark1939).length;
+    const updated = window.ATLAS_DATA.updated || '';
+    const months = ['ocak','şubat','mart','nisan','mayıs','haziran','temmuz','ağustos','eylül','ekim','kasım','aralık'];
+    const [day, month, year] = updated.split(' ');
+    const numeric = months.includes((month||'').toLocaleLowerCase('tr')) ? `${day.padStart(2,'0')}.${String(months.indexOf(month.toLocaleLowerCase('tr'))+1).padStart(2,'0')}.${year}` : '';
+    const set = (selector, html) => { const node = $(selector); if (node) node.innerHTML = html; };
+    set('.hero-meta>span:first-child', `<i class="live-dot"></i> ${esc(updated)} içerik kesiti`);
+    set('.hero-meta>span:last-child', `${doctrines} doktrin anahtarı ülke kaynağına bağlı`);
+    if (numeric) set('.topbar .edition', `REFERANS / ${numeric}`);
+    $('.atlas-graphic')?.setAttribute('aria-label', `${country.length} ülke anahtarı: ${active} genel kullanıma bağlı, ${inactive} bağlantısız, ${system} sisteme özel`);
+    set('.overview-heading', `<strong>${active} <span>ülke anahtarı bağlı</span></strong><span>${country.length} ülke anahtarı</span>`);
+    const bar = $('.overview-bar');
+    if (bar) [active, inactive, system].forEach((value, i) => { if (bar.children[i]) bar.children[i].style.flex = String(value); });
+    set('.chart-legend', `<span><i class="dot active-dot"></i>${active} bağlı</span><span><i class="dot inactive-dot"></i>${inactive} bağlantısız</span><span><i class="dot system-dot"></i>${system} sisteme özel</span>`);
+    set('.graphic-bottom', `<span>${doctrines} doktrin uyumlu · ${regional} Bölge kartı</span><span>${bookmark} ülke anahtarı · 1939</span>`);
+    set('footer p', `${esc(updated)} · ${country.length} ülke kartı + ${regional} Bölge kartı · ${doctrines} doktrin uyumlu`);
+  })();
   const params = new URLSearchParams(location.search);
   const state = {
     q:params.get('q') || '',
